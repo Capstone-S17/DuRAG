@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "DuRAG"
+version = "0.1.0"
+description = "death to llama-index"
+authors = [{ name = "capstoners" }]
+dependencies = [
+  "python-dotenv",
+  "psycopg2",
+  "llama-index",
+  "weaviate-client",
+  "FlagEmbedding",
+]
+
+[tool.ruff]
+select = ['E', 'F', "I"]
