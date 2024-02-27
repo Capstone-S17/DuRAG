@@ -3,6 +3,8 @@ from swr.swr_retriever import SentenceWindowRetriever
 
 import weaviate
 
+BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
+
 if __name__ == "__main__":
     client = weaviate.connect_to_local()
     reranker = Reranker()

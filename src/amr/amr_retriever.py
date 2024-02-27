@@ -1,82 +1,82 @@
+import weaviate.classes as wvc
+from rds import db
+from typing import Optional
+
+
 class AutoMergingRetriever:
-    def __inti__(self):
-        pass
+    def __init__(self, weaviate_client, rds_cursor):
+        self.weaviate_client = weaviate_client
+        self.rds_cursor = rds_cursor
+        self.collection = self.weaviate_client.collections.get("AMR_chunks")
 
+    def query_collection(self, query: str, filters: Optional[str] = None, limit=10):
+        filter_param = (
+            wvc.query.Filter.by_property("content").like(filters) if filters else None
+        )
+        return self.collection.query.near_text(
+            query=query,
+            # include_vector=True,
+            filters=filter_param,
+            limit=limit,
+        )
 
-"""
-Certainly! The table structure you've provided is a good starting point for storing a tree structure in PostgreSQL, which is a type of RDS that supports hierarchical data querying using Common Table Expressions (CTEs). Here's a more detailed explanation of how you can use this structure to store and retrieve the node tree data:
+    def retrieve_by_uuid_from_weaviate(self, uuid):
+        return self.collection.query.fetch_object_by_id(uuid)
 
-1. **Table Structure Explanation:**
-   - `chunk_id`: A unique identifier for each chunk, which is the primary key.
-   - `parent_chunk_id`: A foreign key that references the `chunk_id` of the parent node. This establishes the parent-child relationship.
-   - `pdf_document_name`: The name of the PDF document from which the chunk comes.
-   - `chunk_text`: The actual text content of the chunk.
-   - `chunk_size`: The size of the chunk, which you are using to determine the level of the node (e.g., 2048, 512, 128).
+    def retrieve_by_uuid_from_rds(self, uuid):
+        self.rds_cursor.execute(
+            """SELECT * FROM "amr_nodes" WHERE chunk_id = %s""", uuid
+        )
+        return self.rds_cursor.fetchall()
 
-2. **Inserting Data:**
-   When inserting data into the `nodes` table, you would include the `chunk_id` of the parent when adding a child node. If the node is a root node, you could set `parent_chunk_id` to `NULL`.
+    def aggregate_chunks(self, chunks):
+        parents = {}
+        for chunk in chunks:
+            # Retrieve the parent id for the given chunk
+            parent_id = self.retrieve_by_uuid_from_rds(chunk["id"])
+            if parent_id:
+                # If two or more chunks have the same parent, we keep the parent in the aggregation
+                parent_uuid = parent_id[0][
+                    0
+                ]  # Assuming the first column is the parent_uuid
+                if parent_uuid in parents:
+                    parents[parent_uuid].append(chunk)
+                else:
+                    parents[parent_uuid] = [chunk]
+            else:
+                parents[chunk["id"]] = [chunk]
 
-3. **Retrieving a Subtree:**
-   To retrieve all descendants (a subtree) of a specific node, you can use a recursive CTE:
+        # Now, replace the smaller chunks with their parent chunk
+        aggregated_chunks = []
+        for parent_uuid, chunks in parents.items():
+            # If the parent has more than one chunk, we only add the parent
+            if len(chunks) > 1:
+                aggregated_chunks.append(
+                    self.retrieve_by_uuid_from_weaviate(parent_uuid)
+                )
+            else:
+                # If the parent has only one chunk, we keep the original chunk
+                aggregated_chunks.extend(chunks)
 
-   ```sql
-   WITH RECURSIVE subtree AS (
-       SELECT chunk_id, parent_chunk_id, pdf_document_name, chunk_text, chunk_size
-       FROM nodes
-       WHERE chunk_id = 'root_chunk_id'  -- Replace with your root node's ID
-       UNION ALL
-       SELECT n.chunk_id, n.parent_chunk_id, n.pdf_document_name, n.chunk_text, n.chunk_size
-       FROM nodes n
-       INNER JOIN subtree s ON s.chunk_id = n.parent_chunk_id
-   )
-   SELECT * FROM subtree;
-   ```
+        return aggregated_chunks
 
-4. **Retrieving Ancestors:**
-   To find all ancestors of a node, you use a recursive CTE as well:
+    def retrieve(self, query, filters=None, limit=10):
+        """
+        from all the retrieved chunks, iterate through them and first
+        find the parent chunks. If 2 or more chunks have the same parent,
+        replace the smaller chunk with the parent chunk. Check again if the
+        parent chunks have the same parent, if so, replace the smaller chunk
+        with the parent chunk.
+        """
+        response = self.query_collection(query, filters, limit)
 
-   ```sql
-   WITH RECURSIVE ancestors AS (
-       SELECT chunk_id, parent_chunk_id, pdf_document_name, chunk_text, chunk_size
-       FROM nodes
-       WHERE chunk_id = 'leaf_chunk_id'  -- Replace with your leaf node's ID
-       UNION ALL
-       SELECT n.chunk_id, n.parent_chunk_id, n.pdf_document_name, n.chunk_text, n.chunk_size
-       FROM nodes n
-       INNER JOIN ancestors a ON a.parent_chunk_id = n.chunk_id
-   )
-   SELECT * FROM ancestors;
-   ```
+        # first aggregation
+        first_aggregation = self.aggregate_chunks(response)
 
-5. **Finding Common Ancestors:**
-   If you retrieve two leaf nodes and want to find their closest common ancestor, you can do this:
+        # second aggregation
+        second_aggregation = self.aggregate_chunks(first_aggregation)
 
-   ```sql
-   WITH RECURSIVE leaf1_ancestors AS (
-       SELECT chunk_id, parent_chunk_id
-       FROM nodes
-       WHERE chunk_id = 'leaf1_chunk_id'  -- Replace with the first leaf's ID
-       UNION ALL
-       SELECT n.chunk_id, n.parent_chunk_id
-       FROM nodes n
-       INNER JOIN leaf1_ancestors a ON a.parent_chunk_id = n.chunk_id
-   ),
-   leaf2_ancestors AS (
-       SELECT chunk_id, parent_chunk_id
-       FROM nodes
-       WHERE chunk_id = 'leaf2_chunk_id'  -- Replace with the second leaf's ID
-       UNION ALL
-       SELECT n.chunk_id, n.parent_chunk_id
-       FROM nodes n
-       INNER JOIN leaf2_ancestors a ON a.parent_chunk_id = n.chunk_id
-   )
-   SELECT DISTINCT a1.chunk_id
-   FROM leaf1_ancestors a1
-   JOIN leaf2_ancestors a2 ON a1.chunk_id = a2.chunk_id
-   ORDER BY a1.chunk_id DESC;  -- Assuming that the root has the lowest chunk_id value
-   ```
+        return second_aggregation
 
-   This query will return the common ancestors of the two leaf nodes, ordered by their distance from the leaves (with the closest ancestor first).
-
-Remember that with each insertion, update, or deletion, you should maintain referential integrity to ensure that the tree structure remains consistent. Also, when performing recursive queries, be mindful of the performance implications on large datasets and consider using indexes effectively, such as a B-tree index on `chunk_id` and `parent_chunk_id` to speed up these operations.
-"""
+    def chunk_text_joiner(self, chunks):
+        return " ".join(chunks)
