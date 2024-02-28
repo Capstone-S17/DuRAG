@@ -4,6 +4,13 @@ from typing import Optional
 
 
 class SentenceWindowRetriever:
+    """
+    Class to retrieve 128 token chunks from Weaviate then adds the before and after chunks.
+    This class does not handle the reranking of the chunks but can help to format for he reranker.
+    Since the base chunk size is 128 tokens, the maximum window size is 384 tokens which is within
+    the 512 token limit of the Reranker.
+    """
+
     def __init__(
         self,
         weaviate_client,

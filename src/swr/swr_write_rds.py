@@ -6,7 +6,7 @@ from rds import db
 from tqdm import tqdm
 from llama_index.core.node_parser.text.sentence import SentenceSplitter
 
-chunker = SentenceSplitter(chunk_size=512)
+chunker = SentenceSplitter(chunk_size=128, chunk_overlap=20)
 sentence_window_map = {}
 sentence_window = namedtuple("sentence_window", ["prev", "next"])
 
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     This script is used to chunk pages from the EXTRACTED_PDF_PAGE table,
     then contruct a mapping of chunks to their respective sentence windows
     (prev, next) UUIDs and store them in a JSON file, while the chunks and
-    their respective UUIDs are stored in chunked_512_recursive_dhanush.
+    their respective UUIDs are stored in chunked_128_sentence_window.
     """
     with db.get_cursor() as cur:
         # Query the EXTRACTED_PDF_PAGE table to get the pages and their ids
@@ -26,8 +26,8 @@ if __name__ == "__main__":
         # note that we are doing the chunking here by pages and not on the entire document
         pages = cur.fetchall()
 
-        insert_query_512 = """
-        INSERT INTO "chunked_512_recursive_dhanush" (
+        insert_query_128 = """
+        INSERT INTO "chunked_128_sentence_window" (
             pdf_page_id,
             chunk_id,
             chunk_text
@@ -43,7 +43,7 @@ if __name__ == "__main__":
                 (page_id, str(uuids[idx]), chunk)
                 for idx, chunk in enumerate(page_chunks)
             ]
-            cur.executemany(insert_query_512, values_to_insert)
+            cur.executemany(insert_query_128, values_to_insert)
 
             for idx, chunk in enumerate(page_chunks):
                 curr_uuid = uuids[idx]
