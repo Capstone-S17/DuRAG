@@ -13,6 +13,8 @@ dependencies = [
   "llama-index",
   "weaviate-client",
   "FlagEmbedding",
+  "google-generativeai",
+  "google-cloud-aiplatform",
 ]
 
 [tool.ruff]
