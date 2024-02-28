@@ -13,7 +13,7 @@ weaviate_client = weaviate.connect_to_local()
 def create_collection(client: WeaviateClient):
     client.collections.create(
         name="SWR_chunks",
-        description="chunks meant to be used for SWR 512 tokens",
+        description="chunks meant to be used for SWR 128 tokens",
         vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_transformers(),
         properties=[
             wvc.config.Property(
@@ -60,7 +60,7 @@ def write_to_collection(collection: Collection, data: list[tuple[Any, ...]]):
 if __name__ == "__main__":
     with db.get_cursor() as cur:
         cur.execute(
-            """SELECT c.chunk_id, c.chunk_text, epp.pdf_document_name FROM chunked_512_recursive_dhanush c JOIN "EXTRACTED_PDF_PAGE" epp ON c.pdf_page_id = epp.id; """
+            """SELECT c.chunk_id, c.chunk_text, epp.pdf_document_name c.metadata FROM chunked_128_sentence_window c JOIN "EXTRACTED_PDF_PAGE" epp ON c.pdf_page_id = epp.id; """
         )
         pages = cur.fetchall()
 
