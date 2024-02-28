@@ -2,44 +2,68 @@ from vertexai.preview.generative_models import GenerativeModel, GenerationConfig
 from vertexai.preview.language_models import TextGenerationModel, ChatModel
 import google.generativeai as genai
 import os
+from typing import List,Generator
 
 
 class Generator: 
 
-    def response_synthesis(self, retrieved_text, query) -> str:
-        genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-
-
-        context_str = ""
-        for i in len(retrieved_text):
-            chunk = str(i) + " " + retrieved_text[i]
-            context_str += chunk
-        
-        prompt = f"""Context information from multiple sources is below.
+    def __init__(self,use_google_api=True):
+        self.prompt = """Context information from multiple sources is below.
             ---------------------
-            {context_str}
+            {}
             ---------------------
             Given the information from multiple sources and not prior knowledge, answer the query.
-            Query: {query}
+            Query: {}
             """
+        if use_google_api:
+            genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+        self.generation_config = GenerationConfig(temperature=0.2, 
+                                                  max_output_tokens=2048,
+                                                  top_p = 0.8,
+                                                  top_k = 40)
 
-        return text_bison(prompt)
+        self.gemini = GenerativeModel("gemini-pro", generation_config = self.generation_config) 
+        self.palm_bison = GenerativeModel("chat-bison", generation_config = self.generation_config) 
+        
 
-    def gemini_generation(self, prompt) -> str:
-        model = GenerativeModel("gemini-pro", generation_config = GenerationConfig(temperature=0.2, max_output_tokens=2048))
-        return model.generate_content(prompt, stream=True)
+    def response_synthesis(self, retrieved_text:List,query:str,use_gemini=True) -> List:
+        if use_gemini:
+            out = self._gemini_generation(retrieved_text,query)
+        else:
+            out = self._palm_generation(retrieved_text,query)
+            
+        return out[0]
+
+    def _gemini_generation(self,retrieved_text:List, query) -> List:
+        context_str = ""
+        for i in range(len(retrieved_text)):
+            chunk = str(i+1) + " " + retrieved_text[i]
+            context_str += chunk
+        
+        prompt = self.prompt.format(retrieved_text,query)
+        
+        response = self.gemini.generate_content(prompt, stream=True)
+        out = []
+        for r in response:
+            out.append(r)
+            print(r.text,end='')
+        return out
+
+        
     
     
-    def text_bison(prompt)-> str:
-        textmodel = TextGenerationModel.from_pretrained("text-bison")
-        parameters = {
-            "temperature": 0.1,  # Temperature controls the degree of randomness in token selection.
-            "max_output_tokens": 256,  # Token limit determines the maximum amount of text output.
-            "top_p": 0.8,  # Tokens are selected from most probable to least until the sum of their probabilities equals the top_p value.
-            "top_k": 40,  # A top_k of 1 means the selected token is the most probable among all tokens.
-        }
+    def _palm_generation(self,retrieved_text:List,query)-> List:
+        context_str = ""
+        for i in range(len(retrieved_text)):
+            chunk = str(i+1) + " " + retrieved_text[i]
+            context_str += chunk
+        
+        prompt = self.prompt.format(retrieved_text,query)
+        
+        response = self.palm_bison.generate_content(prompt, stream=True)
+        
+        for r in response:
+            out.append(r)
+            print(r.text,end='')
+        return out
 
-        responses = textmodel.predict_streaming(prompt=prompt, **parameters)
-
-#    def count_tokens(self, prompt: str) -> int:
-#        
