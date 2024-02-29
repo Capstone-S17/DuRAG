@@ -6,11 +6,7 @@
 4. Install DuRAG: `pip install -e .`
 5. Add .env file at project root
 
-# Issues
+# Roadmap
 
-- AMR chunks in rds has uuid for the 2048 chunks but i did not intend this. it just points to the uuid for the pdf itself. not an issue but can be cleaned up...
-- need to write generator.py (chiayu)
-- need to write query_expander.py (chiayu - try something super simple first like just getting some ners from the qn to filter down)
-- need to write eval scripts in eval/ (vic)
-- need to run UNI-NER again on 128_sentence_window im so sorry (dylan)
-- thoughts on how to move all of this to cloud? (dylan)
+- "grid search" for types of retrievers
+  - Variables: query expansion; types of search models [ft, sm, hybrid]; types of postprocessing [sentence window, auto merging, hybrid];
