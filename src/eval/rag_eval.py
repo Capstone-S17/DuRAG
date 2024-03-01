@@ -13,8 +13,6 @@ import logging
 
 class RAGeval:
 
-
-
     def __init__(self):
 
         ## Just default to gemini-pro, can change later

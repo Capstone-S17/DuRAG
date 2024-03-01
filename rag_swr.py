@@ -22,6 +22,6 @@ if __name__ == "__main__":
 
 
     generator = Generator();
-    print(generator.response_synthesis(reranked_results, query))
+    response = generator.response_synthesis(reranked_results, query) 
 
     # i think we should coalese if there is overlap before passing to generator

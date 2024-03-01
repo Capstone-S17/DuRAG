@@ -48,8 +48,6 @@ class Generator:
             out.append(r)
             print(r.text,end='')
         return out
-
-        
     
     
     def _palm_generation(self,retrieved_text:List,query)-> List:
