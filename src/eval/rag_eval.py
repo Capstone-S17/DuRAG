@@ -37,21 +37,39 @@ class RAGeval:
                     .on_input_output()
                 )
         
-    def get_groundness_score(self, source: str, statement: str):
-
+    def _get_groundness_score(self, source: str, statement: str):
         score_dict, reason_dict = self.f_groundedness(source,statement)
-
         ## Idk why groundedness function returns a different format compared to other 2 eval func
         score_dict = score_dict['statement_0']
         return score_dict
 
-    def get_answer_relevance_score(self, source: str, statement: str):
-
+    def _get_answer_relevance_score(self, source: str, statement: str):
         score, reasoning = self.f_qa_relevance(source,statement)
         return score
+    
     def get_context_relevance_score(self, source: str, statement: str):
-
         score, reasoning = self.f_qs_relevance(source,statement)
-
         return score
-        
+
+    def _document_retrieval_accuracy(self, groundtruth: str, retrieved: list):
+        for r in retrieved:
+            if groundtruth == r:
+                return 1
+
+    def _filter_accuracy(self, groundtruth: str, filtered: list):
+        if groundtruth in filtered:
+            return 1
+    
+    def assess_single_retrieval(self, groundtruth: str, retrieved: str, filtered: list):
+        groundness_score = self._get_groundness_score(groundtruth, retrieved)
+        answer_relevance_score = self._get_answer_relevance_score(groundtruth, retrieved)
+        context_relevance_score = self.get_context_relevance_score(groundtruth, retrieved)
+        document_retrieval_accuracy = self._document_retrieval_accuracy(groundtruth, retrieved)
+        filter_accuracy = self._filter_accuracy(groundtruth, filtered)
+        return {
+            "groundness_score": groundness_score,
+            "answer_relevance_score": answer_relevance_score,
+            "context_relevance_score": context_relevance_score,
+            "document_retrieval_accuracy": document_retrieval_accuracy,
+            "filter_accuracy": filter_accuracy
+        }

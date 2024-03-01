@@ -70,7 +70,7 @@ class Generator:
 
         return out[0]
 
-    def _gemini_generation(self, retrieved_text: list, query) -> list[str]:
+    def _gemini_generation(self, retrieved_text: list, query) -> str:
         context_str = ""
         for i in range(len(retrieved_text)):
             chunk = str(i + 1) + " " + retrieved_text[i]
@@ -83,9 +83,9 @@ class Generator:
         for r in response:
             out.append(r)
             print(r.text, end="")
-        return out
+        return " ".join(out)
 
-    def _palm_generation(self, retrieved_text: list, query) -> list:
+    def _palm_generation(self, retrieved_text: list, query) -> str:
         context_str = ""
         for i in range(len(retrieved_text)):
             chunk = str(i + 1) + " " + retrieved_text[i]
@@ -99,7 +99,7 @@ class Generator:
         for r in response:
             out.append(r)
             print(r.text, end="")
-        return out
+        return " ".join(out)
 
     # def query_expansion(self, query: str) -> str:
     #     prompt = QUERY_EXPANSION_PROMPT.format(query)
