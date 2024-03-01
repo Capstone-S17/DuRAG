@@ -62,8 +62,8 @@ class SentenceWindowRetriever(Retriever):
         return sentence_window_included
 
     @classmethod
-    def window_text_joiner(cls, sentence_windows: list[tuple[str, str]]):
-        return " ".join(i[1] for i in sentence_windows)
+    def window_text_joiner(cls, window: list[tuple[str, str]]) -> str:
+        return " ".join(i[1] for i in window)
 
     @classmethod
     def get_rerank_format(

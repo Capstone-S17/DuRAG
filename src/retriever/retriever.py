@@ -37,3 +37,13 @@ class Retriever:
             filters=filter_param,
             limit=limit,
         )
+
+    @classmethod
+    def chunk_text_joiner(cls, chunks: list[str]):
+        """
+        Joins the chunks into a single string and enumerates them
+
+        NOTE: not sure if this method should work on list[str] or the response obj format...
+        currently assuming that the user should clean up whatever they pass in
+        """
+        return "\n".join(f"{i+1}. {chunk}" for i, chunk in enumerate(chunks))
