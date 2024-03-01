@@ -49,18 +49,21 @@ def create_collection(client: WeaviateClient):
 
 def write_to_collection(collection: Collection, data: list[tuple[Any, ...]]):
     with collection.batch.fixed_size(batch_size=100) as batch:
-        for chunk_id, chunk_text, pdf_name in tqdm(data):
+        for chunk_id, chunk_text, pdf_name, entities in tqdm(data):
             properties = {
                 "pdf_name": pdf_name,
                 "content": chunk_text,
+                "NER": list(entities.values()),
             }
             batch.add_object(properties=properties, uuid=chunk_id)
 
 
 if __name__ == "__main__":
+    # note: this process takes about 12-15 minutes
+
     with db.get_cursor() as cur:
         cur.execute(
-            """SELECT c.chunk_id, c.chunk_text, epp.pdf_document_name c.metadata FROM chunked_128_sentence_window c JOIN "EXTRACTED_PDF_PAGE" epp ON c.pdf_page_id = epp.id; """
+            """SELECT c.chunk_id, c.chunk_text, epp.pdf_document_name, c.metadata FROM chunked_128_sentence_window c JOIN "EXTRACTED_PDF_PAGE" epp ON c.pdf_page_id = epp.id; """
         )
         pages = cur.fetchall()
 

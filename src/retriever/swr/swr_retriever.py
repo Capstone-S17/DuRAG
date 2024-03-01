@@ -1,46 +1,38 @@
-import weaviate.classes as wvc
 import json
-from typing import Optional
+from retriever.retriever import Retriever
 
 
-class SentenceWindowRetriever:
+class SentenceWindowRetriever(Retriever):
     """
     Class to retrieve 128 token chunks from Weaviate then adds the before and after chunks.
-    This class does not handle the reranking of the chunks but can help to format for he reranker.
+    This class does not handle the reranking of the chunks but can help to format for the reranker.
     Since the base chunk size is 128 tokens, the maximum window size is 384 tokens which is within
     the 512 token limit of the Reranker.
+
+    Example usage:
+        response = self.semantic_search(query, filters) # or full_text  or hybrid, comes from Retriever Base Class
+        sentence_windows = self.get_sentence_windows(response.objects) # to find the sentence windows
     """
 
     def __init__(
         self,
         weaviate_client,
+        collection_name: str,
         sentence_window_map_path="src/swr/sentence_window_map.json",
     ):
-        self.client = weaviate_client
+        super().__init__(weaviate_client, collection_name)
         self.sentence_window_map = self._load_sentence_window_map(
             sentence_window_map_path
         )
-        self.collection = self.client.collections.get("SWR_chunks")
 
-    def _load_sentence_window_map(self, path):
+    def _load_sentence_window_map(self, path) -> dict:
         with open(path, "r") as f:
             return json.load(f)
-
-    def query_collection(self, query: str, filters: Optional[str] = None, limit=10):
-        filter_param = (
-            wvc.query.Filter.by_property("content").like(filters) if filters else None
-        )
-        return self.collection.query.near_text(
-            query=query,
-            # include_vector=True,
-            filters=filter_param,
-            limit=limit,
-        )
 
     def retrieve_by_uuid(self, uuid):
         return self.collection.query.fetch_object_by_id(uuid)
 
-    def get_sentence_windows(self, response_objects):
+    def get_sentence_windows(self, response_objects) -> list[list[tuple[str, str]]]:
         sentence_window_included = []
         for o in response_objects:
             window_data = []
@@ -69,17 +61,12 @@ class SentenceWindowRetriever:
             sentence_window_included.append(window_data)
         return sentence_window_included
 
-    def window_text_joiner(self, window):
-        return " ".join(i[1] for i in window)
+    @classmethod
+    def window_text_joiner(cls, sentence_windows: list[tuple[str, str]]):
+        return " ".join(i[1] for i in sentence_windows)
 
-    def get_swr_outputs(self, query, filters=None):
-        response = self.query_collection(query, filters)
-        sentence_windows = self.get_sentence_windows(response.objects)
-        return sentence_windows
-
-    def get_rerank_format(self, query, filters=None):
-        self.sentence_windows = self.get_swr_outputs(query, filters)
-        pairs = [
-            [query, self.window_text_joiner(window)] for window in self.sentence_windows
-        ]
-        return pairs
+    @classmethod
+    def get_rerank_format(
+        cls, query: str, sentence_windows: list[list[tuple[str, str]]]
+    ):
+        return [[query, cls.window_text_joiner(window)] for window in sentence_windows]
