@@ -41,7 +41,7 @@ class Retriever:
     @classmethod
     def chunk_text_joiner(cls, chunks: list[str]):
         """
-        Joins the chunks into a single string and enumerates them
+        Joins the chunks into a single string and enumerates them. Meant to be used in RAG prompt.
 
         NOTE: not sure if this method should work on list[str] or the response obj format...
         currently assuming that the user should clean up whatever they pass in

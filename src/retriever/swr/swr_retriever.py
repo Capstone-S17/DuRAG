@@ -17,10 +17,9 @@ class SentenceWindowRetriever(Retriever):
     def __init__(
         self,
         weaviate_client,
-        collection_name: str,
         sentence_window_map_path="src/swr/sentence_window_map.json",
     ):
-        super().__init__(weaviate_client, collection_name)
+        super().__init__(weaviate_client, "SWR_chunks")
         self.sentence_window_map = self._load_sentence_window_map(
             sentence_window_map_path
         )

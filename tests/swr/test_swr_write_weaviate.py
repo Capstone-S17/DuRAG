@@ -13,7 +13,7 @@ class TestWeaviate(unittest.TestCase):
 
     def setUp(self):
         # Setup that is run before each test
-        with open("src/swr/sentence_window_map.json", "r") as f:
+        with open("src/retriever/swr/sentence_window_map.json", "r") as f:
             self.sentence_window_map = json.load(f)
         self.collection = self.client.collections.get("SWR_chunks")
 
