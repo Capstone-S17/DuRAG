@@ -17,7 +17,7 @@ class SentenceWindowRetriever(Retriever):
     def __init__(
         self,
         weaviate_client,
-        sentence_window_map_path="src/swr/sentence_window_map.json",
+        sentence_window_map_path="src/retriever/swr/sentence_window_map.json",
     ):
         super().__init__(weaviate_client, "SWR_chunks")
         self.sentence_window_map = self._load_sentence_window_map(
@@ -68,4 +68,4 @@ class SentenceWindowRetriever(Retriever):
     def get_rerank_format(
         cls, query: str, sentence_windows: list[list[tuple[str, str]]]
     ):
-        return [[query, cls.window_text_joiner(window)] for window in sentence_windows]
+        return [(query, cls.window_text_joiner(window)) for window in sentence_windows]
