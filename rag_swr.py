@@ -10,7 +10,11 @@ if __name__ == "__main__":
     client = weaviate.connect_to_local()
     reranker = Reranker()
     swr_engine = SentenceWindowRetriever(client)
-    query = "How long from financial year-end before Stamford Land Corporation annual financial statements are released?"
+    query = (
+        BGE_QUERY_PREFIX
+        + "How long from financial year-end before Stamford Land Corporation annual financial statements are released?"
+    )
+    # retrieval_response = swr_engine.query_collection(query, filters=None, limit=10)
     results = swr_engine.get_rerank_format(query)
     reranked_results = reranker.rerank_top_k(results, 3)
 
