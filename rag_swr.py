@@ -1,5 +1,5 @@
 from reranker import Reranker
-from swr.swr_retriever import SentenceWindowRetriever
+from retriever.swr.swr_retriever import SentenceWindowRetriever
 from src.generator import Generator
 
 import weaviate
@@ -14,12 +14,24 @@ def swr_pipeline(query: str):
         BGE_QUERY_PREFIX
         + query
     )
-    # retrieval_response = swr_engine.query_collection(query, filters=None, limit=10)
-    results = swr_engine.get_rerank_format(query)
+    retrieval_response = swr_engine.hybrid_search(query, filters=None, limit=10)
+    # print("*" * 100)
+    # print("Retrieval response: \n\n")
+    # print(swr_engine.chunk_text_joiner_response(retrieval_response.objects))
+    # print("*" * 100)
+    # retrieval_response = swr_engine.full_text_search(query, filters=None, limit=10)
+    # retrieval_response = swr_engine.semantic_search(query, filters=None, limit=10)
+    sentence_windows = swr_engine.get_sentence_windows(retrieval_response.objects)
+    # print("*" * 100)
+    # print("Sentence Windows: \n\n")
+    # print(sentence_windows)
+    # print("*" * 100)
+    results = swr_engine.get_rerank_format(query, sentence_windows)
     reranked_results = reranker.rerank_top_k(results, 3)
 
     # Process results
-    for result[1] in reranked_results:
+    print("Sentence Window response: \n\n")
+    for result in reranked_results:
         print("-" * 100)
         print(result)
 

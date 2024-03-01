@@ -1,39 +1,27 @@
-import weaviate.classes as wvc
-from rds import db
-from typing import Optional
+from retriever.retriever import Retriever
 
 
-class AutoMergingRetriever:
+class AutoMergingRetriever(Retriever):
     def __init__(self, weaviate_client, rds_cursor):
+        super().__init__(weaviate_client, "AMR_chunks")
         self.weaviate_client = weaviate_client
         self.rds_cursor = rds_cursor
-        self.collection = self.weaviate_client.collections.get("AMR_chunks")
-
-    def query_collection(self, query: str, filters: Optional[str] = None, limit=10):
-        filter_param = (
-            wvc.query.Filter.by_property("content").like(filters) if filters else None
-        )
-        return self.collection.query.near_text(
-            query=query,
-            # include_vector=True,
-            filters=filter_param,
-            limit=limit,
-        )
 
     def retrieve_by_uuid_from_weaviate(self, uuid):
         return self.collection.query.fetch_object_by_id(uuid)
 
-    def retrieve_by_uuid_from_rds(self, uuid):
+    def retrieve_by_uuid_from_rds(self, uuid: str):
         self.rds_cursor.execute(
-            """SELECT * FROM "amr_nodes" WHERE chunk_id = %s""", uuid
+            f"""SELECT * FROM "amr_nodes" WHERE chunk_id = '{uuid}'"""
         )
+        print(self.rds_cursor.fetchall())
         return self.rds_cursor.fetchall()
 
     def aggregate_chunks(self, chunks):
         parents = {}
         for chunk in chunks:
             # Retrieve the parent id for the given chunk
-            parent_id = self.retrieve_by_uuid_from_rds(chunk["id"])
+            parent_id = self.retrieve_by_uuid_from_rds(str(chunk.uuid))
             if parent_id:
                 # If two or more chunks have the same parent, we keep the parent in the aggregation
                 parent_uuid = parent_id[0][
@@ -44,7 +32,7 @@ class AutoMergingRetriever:
                 else:
                     parents[parent_uuid] = [chunk]
             else:
-                parents[chunk["id"]] = [chunk]
+                parents[chunk.uuid] = [chunk]
 
         # Now, replace the smaller chunks with their parent chunk
         aggregated_chunks = []
@@ -60,7 +48,7 @@ class AutoMergingRetriever:
 
         return aggregated_chunks
 
-    def retrieve(self, query, filters=None, limit=10):
+    def retrieve(self, response):
         """
         from all the retrieved chunks, iterate through them and first
         find the parent chunks. If 2 or more chunks have the same parent,
@@ -68,15 +56,8 @@ class AutoMergingRetriever:
         parent chunks have the same parent, if so, replace the smaller chunk
         with the parent chunk.
         """
-        response = self.query_collection(query, filters, limit)
-
         # first aggregation
         first_aggregation = self.aggregate_chunks(response)
-
         # second aggregation
         second_aggregation = self.aggregate_chunks(first_aggregation)
-
         return second_aggregation
-
-    def chunk_text_joiner(self, chunks):
-        return " ".join(chunks)
