@@ -13,9 +13,10 @@ def parse_args():
 
 if __name__ == "__main__":
     args=parse_args()
+    evaluation = RAGeval()
     retrieval = args.retrieval
     with db.get_cursor() as cur:
-        cur.execute("""SELECT * FROM "QUESTION_BANK" """)
+        cur.execute("""SELECT question, pdf_document_name FROM "QUESTION_BANK" """)
         questions = cur.fetchall()
         if retrieval == "swr":
             pipeline = swr_pipeline
@@ -24,7 +25,15 @@ if __name__ == "__main__":
             pipeline = amr_pipeline #pipeline not up
             eval_table = "amr_node"
         for q in questions:
-            print(q)
+            response, retrieved = pipeline(q[0])
+            docs = []
+            for r in retrieved:
+                print(r)
+                cur.execute("""SELECT pdf_document_name FROM "%s" WHERE chunk_id = %s""", (eval_table, r[1]))
+                doc = cur.fetchall()
+                docs.extend(doc)
+            evaluation.assess_single_retrieval(q[0], response, docs)
+
                 
 
 
