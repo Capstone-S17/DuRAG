@@ -53,7 +53,7 @@ class RAGeval:
 
     def _document_retrieval_accuracy(self, groundtruth: str, retrieved: list):
         for r in retrieved:
-            if groundtruth == r:
+            if groundtruth == r[0]:
                 return 1
 
     def _filter_accuracy(self, groundtruth: str, filtered: list):
