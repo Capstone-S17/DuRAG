@@ -40,6 +40,7 @@ class RAGeval:
     def _get_groundness_score(self, source: str, statement: str):
         score_dict, reason_dict = self.f_groundedness(source,statement)
         ## Idk why groundedness function returns a different format compared to other 2 eval func
+        print(score_dict, reason_dict)
         score_dict = score_dict['statement_0']
         return score_dict
 
@@ -60,16 +61,16 @@ class RAGeval:
         if groundtruth in filtered:
             return 1
     
-    def assess_single_retrieval(self, groundtruth: str, retrieved: str, filtered: list):
-        groundness_score = self._get_groundness_score(groundtruth, retrieved)
-        answer_relevance_score = self._get_answer_relevance_score(groundtruth, retrieved)
-        context_relevance_score = self.get_context_relevance_score(groundtruth, retrieved)
-        document_retrieval_accuracy = self._document_retrieval_accuracy(groundtruth, retrieved)
-        filter_accuracy = self._filter_accuracy(groundtruth, filtered)
+    def assess_single_retrieval(self, question: str, context: str, generated: str):
+        groundness_score = self._get_groundness_score(context, generated)
+        answer_relevance_score = self._get_answer_relevance_score(question, generated)
+        context_relevance_score = self.get_context_relevance_score(question, context)
+        # document_retrieval_accuracy = self._document_retrieval_accuracy(groundtruth, retrieved)
+        # filter_accuracy = self._filter_accuracy(groundtruth, filtered)
         return {
             "groundness_score": groundness_score,
             "answer_relevance_score": answer_relevance_score,
             "context_relevance_score": context_relevance_score,
-            "document_retrieval_accuracy": document_retrieval_accuracy,
-            "filter_accuracy": filter_accuracy
+            # "document_retrieval_accuracy": document_retrieval_accuracy,
+            # "filter_accuracy": filter_accuracy
         }

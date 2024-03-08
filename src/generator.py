@@ -68,7 +68,7 @@ class Generator:
         else:
             out = self._palm_generation(retrieved_text, query)
 
-        return out[0]
+        return out
 
     def _gemini_generation(self, retrieved_text: list, query) -> str:
         context_str = ""
@@ -80,9 +80,11 @@ class Generator:
 
         response = self.gemini.generate_content(prompt, stream=True)
         out = []
+        print("Generated Answer: ")
         for r in response:
-            out.append(r)
+            out.append(r.text)
             print(r.text, end="")
+        print("\n")
         return " ".join(out)
 
     def _palm_generation(self, retrieved_text: list, query) -> str:
