@@ -1,6 +1,7 @@
-from src.reranker import Reranker
+from reranker import Reranker
 from retriever.swr.swr_retriever import SentenceWindowRetriever
 from src.generator import Generator
+import os
 
 import weaviate
 
@@ -10,10 +11,7 @@ def swr_pipeline(query: str):
     client = weaviate.connect_to_local()
     reranker = Reranker()
     swr_engine = SentenceWindowRetriever(client)
-    query = (
-        BGE_QUERY_PREFIX
-        + query
-    )
+    query = BGE_QUERY_PREFIX + query
     retrieval_response = swr_engine.hybrid_search(query, filters=None, limit=10)
     # print("*" * 100)
     # print("Retrieval response: \n\n")
@@ -35,15 +33,20 @@ def swr_pipeline(query: str):
         print("-" * 100)
         print(result)
 
-    generator = Generator();
+    generator = Generator()
+   # print("RERANKED RESULT",reranked_results)
+    # reranked_results is a list of tuple of of [obj1,obj2,obj3] where obj 1 is a tuple ((uuid,query,retrieved_chunk)).
+    #I think converting this into a list of dictionary would be neater
     reranked_context = [reranked_results[i][0][2] for i in range(len(reranked_results))]
-    response = generator.response_synthesis(reranked_context, query) 
+    #print("RERANKED CONTEXT",reranked_context)
+    response = generator.response_synthesis(reranked_context, query)
 
     return response, reranked_results
 
     # i think we should coalese if there is overlap before passing to generator
 
-    
+
 if __name__ == "__main__":
-    swr_pipeline("How long from financial year-end before Stamford Land Corporation annual financial statements are released?")
-    
+    swr_pipeline(
+        "How long from financial year-end before Stamford Land Corporation annual financial statements are released?"
+    )

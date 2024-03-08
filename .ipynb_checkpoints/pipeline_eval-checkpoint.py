@@ -1,10 +1,8 @@
 from rag_swr import swr_pipeline
-from rag_amr import amr_pipeline
+#from rag_amr import amr_pipeline
 from src.eval.rag_eval import RAGeval
 from src.rds import db
-import argparse 
-import os
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'arched-forest-409209-854f83e41ed5.json'
+import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -27,17 +25,14 @@ if __name__ == "__main__":
             pipeline = amr_pipeline #pipeline not up
             eval_table = "amr_node"
         for q in questions:
-            print("Question: "+ q[0])
-            print("-" * 100)
             response, retrieved = pipeline(q[0])
-            # docs = []
-            # for r in retrieved:
-            #     print(r[0][0])
-            #     cur.execute("""SELECT pdf_document_name FROM chunked_128_sentence_window WHERE chunk_id = %s""", (str(r[0][0]),))
-            #     doc = cur.fetchall()
-            #     docs.extend(doc)
-            print("Evaluation: ")
-            print(evaluation.assess_single_retrieval(q[0], response))
+            docs = []
+            for r in retrieved:
+                print(r)
+                cur.execute("""SELECT pdf_document_name FROM "%s" WHERE chunk_id = %s""", (eval_table, r[1]))
+                doc = cur.fetchall()
+                docs.extend(doc)
+            evaluation.assess_single_retrieval(q[0], response, docs)
 
                 
 
