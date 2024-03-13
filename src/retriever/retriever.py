@@ -8,8 +8,13 @@ class Retriever:
         self.collection = self.client.collections.get(collection_name)
 
     def _get_filter_param(self, filters: Optional[str]):
+        """
+        can also combine filters with and/or & |
+        if we have token_list = ["apple", "banana", "cherry"]
+        wvc.query.Filter.by_property("content").like(filters) | wvc.query.Filter.by_property("NER").contains_any(token_list)
+        """
         return (
-            wvc.query.Filter().by_property("content").like(filters) if filters else None
+            wvc.query.Filter.by_property("content").like(filters) if filters else None
         )
 
     def semantic_search(self, query: str, filters: Optional[str] = None, limit=10):
