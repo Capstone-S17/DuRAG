@@ -1,18 +1,18 @@
-from reranker import Reranker
+from src.reranker import Reranker
 from retriever.swr.swr_retriever import SentenceWindowRetriever
 from src.generator import Generator
 
 import weaviate
 
-BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 
-if __name__ == "__main__":
+def swr_pipeline(query: str):
+    BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
     client = weaviate.connect_to_local()
     reranker = Reranker()
     swr_engine = SentenceWindowRetriever(client)
     query = (
         BGE_QUERY_PREFIX
-        + "How long from financial year-end before Stamford Land Corporation annual financial statements are released?"
+        + query
     )
     filters = "Stamford Land Corporation"
     # filters = "monkey"
@@ -37,7 +37,15 @@ if __name__ == "__main__":
         print("-" * 100)
         print(result)
 
-    # generator = Generator()
-    # print(generator.response_synthesis(reranked_results, query))
+    generator = Generator();
+    reranked_context = [reranked_results[i][0][2] for i in range(len(reranked_results))]
+    response = generator.response_synthesis(reranked_context, query) 
+
+    return response, reranked_results
 
     # i think we should coalese if there is overlap before passing to generator
+
+    
+if __name__ == "__main__":
+    swr_pipeline("How long from financial year-end before Stamford Land Corporation annual financial statements are released?")
+    

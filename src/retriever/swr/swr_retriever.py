@@ -68,4 +68,7 @@ class SentenceWindowRetriever(Retriever):
     def get_rerank_format(
         cls, query: str, sentence_windows: list[list[tuple[str, str]]]
     ):
-        return [(query, cls.window_text_joiner(window)) for window in sentence_windows]
+        return [
+            (window[0][0], query, cls.window_text_joiner(window))
+            for window in sentence_windows
+        ]

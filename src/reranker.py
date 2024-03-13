@@ -19,8 +19,8 @@ class Reranker:
         self.reranker = FlagReranker(model_name, use_fp16=use_fp16)
 
     def rerank_top_k(
-        self, pairs: list[tuple[str, str]], k: int = 5
-    ) -> list[tuple[tuple[str, str], float]]:
+        self, triples: list[tuple[str, str, str]], k: int = 5
+    ) -> list[tuple[tuple[str, str, str], float]]:
         """
         Reranks a list of pairs and returns the top `k` pairs based on the scores from the reranker model.
 
@@ -34,9 +34,12 @@ class Reranker:
         The method computes scores for each pair using the reranker model and sorts the list
         in descending order based on these scores. It then returns the top `k` pairs from this sorted list.
         """
-        scores = self.reranker.compute_score(pairs)
+        # we need list[tuple[str, str]] but i have list[tuple[str, str, str]]
+        pairs_formatted = [(pair[1], pair[2]) for pair in triples]
+        scores = self.reranker.compute_score(pairs_formatted)
 
-        scored_pairs = list(zip(pairs, scores))
+        # sort on the original triples
+        scored_pairs = list(zip(triples, scores))
 
         scored_pairs.sort(key=lambda x: x[1], reverse=True)
 
