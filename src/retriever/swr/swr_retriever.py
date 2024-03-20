@@ -43,19 +43,31 @@ class SentenceWindowRetriever(Retriever):
                 if left is not None:
                     left_data = self.retrieve_by_uuid(left)
                     window_data.append(
-                        (left_data.uuid, left_data.properties["content"])
+                        (
+                            left_data.uuid,
+                            left_data.properties["content"],
+                            left_data.properties["pdf_name"],
+                        )
                     )
                 # Append the original chunk
-                window_data.append((o.uuid, o.properties["content"]))
+                window_data.append(
+                    (o.uuid, o.properties["content"], o.properties["pdf_name"])
+                )
                 # Fetch and append the right chunk if it exists
                 if right is not None:
                     right_data = self.retrieve_by_uuid(right)
                     window_data.append(
-                        (right_data.uuid, right_data.properties["content"])
+                        (
+                            right_data.uuid,
+                            right_data.properties["content"],
+                            right_data.properties["pdf_name"],
+                        )
                     )
             else:
                 # If there's no mapping found, just append the original chunk
-                window_data.append((o.uuid, o.properties["content"]))
+                window_data.append(
+                    (o.uuid, o.properties["content"], o.properties["pdf_name"])
+                )
                 # this should never happen lol
             sentence_window_included.append(window_data)
         return sentence_window_included
@@ -66,9 +78,9 @@ class SentenceWindowRetriever(Retriever):
 
     @classmethod
     def get_rerank_format(
-        cls, query: str, sentence_windows: list[list[tuple[str, str]]]
+        cls, query: str, sentence_windows: list[list[tuple[str, str, str]]]
     ):
         return [
-            (window[0][0], query, cls.window_text_joiner(window))
+            (window[0][0], query, cls.window_text_joiner(window), window[0][2])
             for window in sentence_windows
         ]

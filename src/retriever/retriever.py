@@ -1,5 +1,6 @@
 import weaviate.classes as wvc
-from typing import Optional, Any
+from functools import reduce
+from typing import Optional, Any, Literal
 
 
 class Retriever:
@@ -7,17 +8,32 @@ class Retriever:
         self.client = weaviate_client
         self.collection = self.client.collections.get(collection_name)
 
-    def _get_filter_param(self, filters: Optional[str]):
+    def _get_filter_param(
+        self,
+        filters: Optional[list[str]],
+        mode: Literal["and", "or"] = "and",
+        property_name: Literal["content", "pdf_name", "NER"] = "content",
+    ):
         """
-        can also combine filters with and/or & |
-        if we have token_list = ["apple", "banana", "cherry"]
-        wvc.query.Filter.by_property("content").like(filters) | wvc.query.Filter.by_property("NER").contains_any(token_list)
+        For pdf_name - use mode = "and" and do exact match (.equal)
+        For content/NER - use mode = "or" and do partial match (like)
         """
-        return (
-            wvc.query.Filter.by_property("content").like(filters) if filters else None
-        )
+        if filters:
+            list_of_filters = [
+                wvc.query.Filter.by_property(property_name).like(keyword)
+                for keyword in filters
+            ]
+            # Dynamically combine the filters using the pipe or ampersand operator
+            if mode == "and":
+                combined_filter = reduce(lambda a, b: a | b, list_of_filters)
+            else:
+                combined_filter = reduce(lambda a, b: a & b, list_of_filters)
+            return combined_filter
+        return None
 
-    def semantic_search(self, query: str, filters: Optional[str] = None, limit=10):
+    def semantic_search(
+        self, query: str, filters: Optional[list[str]] = None, limit=10
+    ):
         filter_param = self._get_filter_param(filters)
         return self.collection.query.near_text(
             query=query,
@@ -26,7 +42,9 @@ class Retriever:
             limit=limit,
         )
 
-    def full_text_search(self, query: str, filters: Optional[str] = None, limit=10):
+    def full_text_search(
+        self, query: str, filters: Optional[list[str]] = None, limit=10
+    ):
         filter_param = self._get_filter_param(filters)
         return self.collection.query.bm25(
             query=query,
@@ -34,7 +52,10 @@ class Retriever:
             limit=limit,
         )
 
-    def hybrid_search(self, query: str, filters: Optional[str] = None, limit=10):
+    def hybrid_search(self, query: str, filters: Optional[list[str]] = None, limit=10):
+        """
+        need to change filters to be a list of filters and use _get_filter_param to create the filters
+        """
         filter_param = self._get_filter_param(filters)
         return self.collection.query.hybrid(
             query=query,

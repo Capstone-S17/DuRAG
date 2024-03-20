@@ -1,6 +1,7 @@
 from vertexai.preview.generative_models import GenerativeModel, GenerationConfig
 import google.generativeai as genai
 import os
+import json
 
 RAG_PROMPT = """
 You are an expert in the field of finance and legal reasoning. 
@@ -13,6 +14,16 @@ If you are unsure, just say there is not enough information to answer the questi
 Query: {}
 """
 
+DEFAULT_TEXT_QA_PROMPT_TMPL = """Context information is below.\n"
+"---------------------\n"
+"{}\n"
+"---------------------\n"
+"Given the context information and not prior knowledge, "
+"answer the query.\n"
+"Query: {}\n"
+"Answer: """
+
+
 QUERY_EXPANSION_PROMPT = """
 You are an expert in the field of finance and legal reasoning for listed companies in Singapore \
 (which may include multinational companies). Based on the following query, please provide a \
@@ -24,8 +35,15 @@ QUERY_ENTITY_PROMPT = """
 You are an expert in the field of finance and legal reasoning for listed companies in Singapore \
 (which may include multinational companies). Based on the following query, please provide a \
 list of entities that can be used for filtering documents. Look out for entities such as \
-company names, people, locations, dates, events, and financial keywords.
+company names, people, locations, dates, events, and financial keywords. Your answer should be in a list of strings. If there is no entities, output [] only.
+Query: When was Tan Kok Hiang’s last re-election as a director for Abundante?
+Answer: ["Tan Kok Hiang", "Abundante"]
+Query: How many people are there on the LREITs board of directors 2023?
+Answer: ["LREITS"]
+Query: What is the dividend per share for shareholders?
+Anwswer: []
 Query: {}
+Answer: 
 """
 
 QUERY_DECOMPOSITION_PROMPT = """
@@ -87,13 +105,28 @@ class Generator:
         print("\n")
         return " ".join(out)
 
+    def generate_keyword(self, query):
+        prompt = QUERY_ENTITY_PROMPT.format(query)
+
+        output = self.gemini.generate_content(prompt, stream=False)
+        #print(output.text)
+        try:
+          filter_list = json.loads(output.text)
+        except: ## Return empty string
+          return []
+        #print(filter_list)
+        ## Need check if filters are generated
+        if len(filter_list) == 0:
+            return []
+        return filter_list
+
     def _palm_generation(self, retrieved_text: list, query) -> str:
         context_str = ""
         for i in range(len(retrieved_text)):
             chunk = str(i + 1) + " " + retrieved_text[i]
             context_str += chunk
 
-        prompt = RAG_PROMPT.format(retrieved_text, query)
+        prompt = DEFAULT_TEXT_QA_PROMPT_TMPL.format(retrieved_text, query)
 
         response = self.palm_bison.generate_content(prompt, stream=True)
         out = []
