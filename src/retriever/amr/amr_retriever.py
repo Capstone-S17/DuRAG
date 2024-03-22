@@ -1,4 +1,4 @@
-from retriever.retriever import Retriever
+from src.retriever.retriever import Retriever
 
 
 class AutoMergingRetriever(Retriever):

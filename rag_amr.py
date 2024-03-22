@@ -1,7 +1,7 @@
-from reranker import Reranker
-from retriever.amr.amr_retriever import AutoMergingRetriever
+from src.reranker import Reranker
+from src.retriever.amr.amr_retriever import AutoMergingRetriever
 from src.generator import Generator
-from rds import db
+from src.rds import db
 
 import weaviate
 

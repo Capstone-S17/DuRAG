@@ -1,7 +1,7 @@
 from typing import Optional
 from dotenv import load_dotenv
 from src.reranker import Reranker
-from retriever.swr.swr_retriever import SentenceWindowRetriever
+from src.retriever.swr.swr_retriever import SentenceWindowRetriever
 from src.generator import Generator
 import json
 import weaviate.classes as wvc
