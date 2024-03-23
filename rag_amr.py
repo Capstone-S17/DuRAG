@@ -1,18 +1,14 @@
-from src.reranker import Reranker
-from src.retriever.amr.amr_retriever import AutoMergingRetriever
-from src.generator import Generator
-from src.rds import db
+from DuRAG import Reranker, AutoMergingRetriever, Generator
+from DuRAG.src.rds import db
 
 import weaviate
+
 
 def amr_pipeline(query: str):
     BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
     client = weaviate.connect_to_local()
     reranker = Reranker()
-    query = (
-        BGE_QUERY_PREFIX
-        + query
-    )
+    query = BGE_QUERY_PREFIX + query
     with db.get_cursor() as rds_cursor:
         amr_engine = AutoMergingRetriever(client, rds_cursor)
         retrieval_response = amr_engine.hybrid_search(query, filters=None, limit=10)
@@ -34,4 +30,6 @@ def amr_pipeline(query: str):
 
 
 if __name__ == "__main__":
-    amr_pipeline("How long from financial year-end before Stamford Land Corporation annual financial statements are released?")
+    amr_pipeline(
+        "How long from financial year-end before Stamford Land Corporation annual financial statements are released?"
+    )

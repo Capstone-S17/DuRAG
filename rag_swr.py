@@ -1,9 +1,6 @@
 from typing import Optional
 from dotenv import load_dotenv
-from src.reranker import Reranker
-from src.retriever.swr.swr_retriever import SentenceWindowRetriever
-from src.generator import Generator
-import json
+from DuRAG import Reranker, SentenceWindowRetriever, Generator
 import weaviate.classes as wvc
 import weaviate
 
@@ -31,7 +28,7 @@ def swr_pipeline(query: str, do_filter: bool = True):
     # print(retrieval_response)
     # print("*" * 100)
     # print("Retrieval response: \n\n")
-    #print(swr_engine.chunk_text_joiner_response(retrieval_response.objects))
+    # print(swr_engine.chunk_text_joiner_response(retrieval_response.objects))
     # print("*" * 100)
     # retrieval_response = swr_engine.full_text_search(query, filters=None, limit=10)
     # retrieval_response = swr_engine.semantic_search(query, filters=None, limit=10)

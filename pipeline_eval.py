@@ -1,7 +1,7 @@
 from rag_swr import swr_pipeline
 from rag_amr import amr_pipeline
-from src.eval.rag_eval import RAGeval
-from src.rds import db
+from DuRAG.src.eval.rag_eval import RAGeval
+from DuRAG.src.rds import db
 import argparse
 from dotenv import load_dotenv
 

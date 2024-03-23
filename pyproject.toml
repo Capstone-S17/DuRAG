@@ -16,11 +16,11 @@ dependencies = [
   "google-generativeai",
   "google-cloud-aiplatform",
   "litellm",
-  "trulens-eval"
+  "trulens-eval",
 ]
 
 [tool.ruff]
 select = ['E', 'F', "I"]
 
 [tool.setuptools.package-dir]
-DuRAG = "src"
+DuRAG = "app"
