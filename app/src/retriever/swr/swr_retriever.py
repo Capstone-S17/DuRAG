@@ -1,5 +1,6 @@
 import json
 from DuRAG.src.retriever.retriever import Retriever
+import pkg_resources
 
 
 class SentenceWindowRetriever(Retriever):
@@ -17,12 +18,12 @@ class SentenceWindowRetriever(Retriever):
     def __init__(
         self,
         weaviate_client,
-        sentence_window_map_path="src/retriever/swr/sentence_window_map.json",
     ):
         super().__init__(weaviate_client, "SWR_chunks")
-        self.sentence_window_map = self._load_sentence_window_map(
-            sentence_window_map_path
+        json_file = pkg_resources.resource_filename(
+            "DuRAG", "src/retriever/swr/sentence_window_map.json"
         )
+        self.sentence_window_map = self._load_sentence_window_map(json_file)
 
     def _load_sentence_window_map(self, path) -> dict:
         with open(path, "r") as f:
