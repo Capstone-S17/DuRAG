@@ -24,3 +24,6 @@ select = ['E', 'F', "I"]
 
 [tool.setuptools.package-dir]
 DuRAG = "app"
+
+[tool.setuptools.package-data]
+DuRAG = ["**/*.json", "**/*.txt"]

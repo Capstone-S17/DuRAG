@@ -1,5 +1,5 @@
 import json
-from src.retriever.retriever import Retriever
+from DuRAG.src.retriever.retriever import Retriever
 
 
 class SentenceWindowRetriever(Retriever):
