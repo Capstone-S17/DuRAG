@@ -4,7 +4,7 @@ from weaviate import WeaviateClient
 from weaviate.collections import Collection
 from tqdm import tqdm
 from typing import Any
-from rds import db
+from DuRAG.rds import db
 
 
 weaviate_client = weaviate.connect_to_local()
@@ -53,7 +53,7 @@ def write_to_collection(collection: Collection, data: list[tuple[Any, ...]]):
             properties = {
                 "pdf_name": pdf_name,
                 "content": chunk_text,
-                "NER": list(entities.values()),
+                # "NER": list(entities.values()),
             }
             batch.add_object(properties=properties, uuid=chunk_id)
 

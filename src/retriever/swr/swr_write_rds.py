@@ -1,7 +1,7 @@
 import json
 import uuid
 from collections import namedtuple
-from rds import db
+from DuRAG.rds import db
 
 from tqdm import tqdm
 from llama_index.core.node_parser.text.sentence import SentenceSplitter
@@ -37,7 +37,10 @@ if __name__ == "__main__":
         for page_id, extracted_text in tqdm(pages):
             page_chunks = chunker.split_text(extracted_text)
 
-            uuids = [uuid.uuid5(uuid.NAMESPACE_DNS, text) for text in page_chunks]
+            uuids = [
+                uuid.uuid5(uuid.NAMESPACE_DNS, str(page_id) + text)
+                for text in page_chunks
+            ]
 
             values_to_insert = [
                 (page_id, str(uuids[idx]), chunk)
@@ -55,5 +58,5 @@ if __name__ == "__main__":
 
         print("New rows inserted successfully.")
 
-        with open("src/swr/sentence_window_map.json", "w") as f:
+        with open("src/retriever/swr/sentence_window_map.json", "w") as f:
             json.dump(sentence_window_map, f, indent=4)
