@@ -1,5 +1,5 @@
 from DuRAG import Reranker, AutoMergingRetriever, Generator
-from DuRAG.src.rds import db
+from DuRAG.rds import db
 
 import weaviate
 

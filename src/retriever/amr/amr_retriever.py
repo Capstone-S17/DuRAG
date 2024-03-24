@@ -1,4 +1,4 @@
-from DuRAG.src.retriever.retriever import Retriever
+from DuRAG.retriever.retriever import Retriever
 
 
 class AutoMergingRetriever(Retriever):

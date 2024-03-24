@@ -23,7 +23,7 @@ dependencies = [
 select = ['E', 'F', "I"]
 
 [tool.setuptools.package-dir]
-DuRAG = "app"
+DuRAG = "src"
 
 [tool.setuptools.package-data]
 DuRAG = ["**/*.json", "**/*.txt"]

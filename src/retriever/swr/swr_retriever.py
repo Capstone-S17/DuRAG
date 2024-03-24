@@ -1,5 +1,5 @@
 import json
-from DuRAG.src.retriever.retriever import Retriever
+from DuRAG.retriever.retriever import Retriever
 import pkg_resources
 
 
