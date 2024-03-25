@@ -52,15 +52,14 @@ class Retriever:
             limit=limit,
         )
 
-    def hybrid_search(self, query: str, filters: Optional[list[str]] = None, limit=10):
+    def hybrid_search(self, query: str, filter_params: list, limit=10):
         """
         need to change filters to be a list of filters and use _get_filter_param to create the filters
         """
-        filter_param = self._get_filter_param(filters)
         return self.collection.query.hybrid(
             query=query,
             # include_vector=True,
-            filters=filter_param,
+            filters=filter_params,
             limit=limit,
         )
 
