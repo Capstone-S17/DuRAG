@@ -17,28 +17,16 @@ def swr_pipeline(query: str, do_filter: bool = True):
     reranker = Reranker()
     swr_engine = SentenceWindowRetriever(client)
     query = BGE_QUERY_PREFIX + query
-    if not filters:
+    if do_filter:
         retrieval_response = swr_engine.hybrid_search(query, filters=filters, limit=10)
     else:
         retrieval_response = swr_engine.hybrid_search(query, limit=10)
 
-    # collection = client.collections.get("SWR_chunks")
-    # response = collection.query.fetch_objects(
-    # filters=wvc.query.Filter.by_id().equal('12e77cdc-0f9f-5c8f-9a99-0c5b25177d9d'))
-    # print(retrieval_response)
-    # print("*" * 100)
-    # print("Retrieval response: \n\n")
-    # print(swr_engine.chunk_text_joiner_response(retrieval_response.objects))
-    # print("*" * 100)
-    # retrieval_response = swr_engine.full_text_search(query, filters=None, limit=10)
-    # retrieval_response = swr_engine.semantic_search(query, filters=None, limit=10)
+    
     sentence_windows = swr_engine.get_sentence_windows(retrieval_response.objects)
-    # print("*" * 100)
-    # print("Sentence Windows: \n\n")
-    # print(sentence_windows)
-    # print("*" * 100)
+   
     results = swr_engine.get_rerank_format(query, sentence_windows)
-    # print(results)
+   
     reranked_results = reranker.rerank_top_k(results, 3)
 
     # Process results
