@@ -11,7 +11,7 @@ class Retriever:
     def _get_filter_param(
         self,
         filters: Optional[list[str]],
-        mode: Literal["and", "or"] = "and",
+        mode: Literal["and", "or"] = "or",
         property_name: Literal["content", "pdf_name", "NER"] = "content",
     ):
         """
@@ -24,7 +24,7 @@ class Retriever:
                 for keyword in filters
             ]
             # Dynamically combine the filters using the pipe or ampersand operator
-            if mode == "and":
+            if mode == "or":
                 combined_filter = reduce(lambda a, b: a | b, list_of_filters)
             else:
                 combined_filter = reduce(lambda a, b: a & b, list_of_filters)
