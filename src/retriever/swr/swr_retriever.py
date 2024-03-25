@@ -21,7 +21,7 @@ class SentenceWindowRetriever(Retriever):
     ):
         super().__init__(weaviate_client, "SWR_chunks")
         json_file = pkg_resources.resource_filename(
-            "DuRAG", "src/retriever/swr/sentence_window_map.json"
+            "DuRAG", "retriever/swr/sentence_window_map.json"
         )
         self.sentence_window_map = self._load_sentence_window_map(json_file)
 
