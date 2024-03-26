@@ -9,25 +9,18 @@ load_dotenv()
 BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 
 
-def swr_pipeline(query: str, do_filter: bool = True):
+def swr_pipeline(query: str, filters):
+
     generator = Generator()
-    if do_filter:
-        filters = generator.generate_keyword(query)
     client = weaviate.connect_to_local()
     reranker = Reranker()
     swr_engine = SentenceWindowRetriever(client)
-    query = BGE_QUERY_PREFIX + query
-    if do_filter:
-        retrieval_response = swr_engine.hybrid_search(query, filters=filters, limit=10)
-    else:
-        retrieval_response = swr_engine.hybrid_search(query, limit=10)
-
-    
+    bge_query = BGE_QUERY_PREFIX + query
+    filter_params = swr_engine._get_filter_param(filters, mode="or", property_name="pdf_name")
+    retrieval_response = swr_engine.hybrid_search(bge_query, limit=10, filter_params=filter_params)
     sentence_windows = swr_engine.get_sentence_windows(retrieval_response.objects)
-   
     results = swr_engine.get_rerank_format(query, sentence_windows)
-   
-    reranked_results = reranker.rerank_top_k(results, 3)
+    reranked_results = reranker.rerank_top_k(results, 5)
 
     # Process results
     print("Sentence Window response: \n\n")
