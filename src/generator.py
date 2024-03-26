@@ -99,11 +99,14 @@ class Generator:
         response = self.gemini.generate_content(prompt, stream=True)
         out = []
         print("Generated Answer: ")
-        for r in response:
-            out.append(r.text)
-            print(r.text, end="")
-        print("\n")
-        return " ".join(out)
+        try:
+            for r in response:
+                out.append(r.text)
+                print(r.text, end="")
+            print("\n")
+            return " ".join(out)
+        except:
+            return ""
 
     def generate_keyword(self, query):
         prompt = QUERY_ENTITY_PROMPT.format(query)
