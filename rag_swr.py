@@ -20,6 +20,7 @@ def swr_pipeline(query: str, filters):
     retrieval_response = swr_engine.hybrid_search(bge_query, limit=10, filter_params=filter_params)
     sentence_windows = swr_engine.get_sentence_windows(retrieval_response.objects)
     results = swr_engine.get_rerank_format(query, sentence_windows)
+    # print(results[0])
     reranked_results = reranker.rerank_top_k(results, 5)
 
     # Process results

@@ -1,5 +1,5 @@
 from rag_swr import swr_pipeline
-# from rag_amr import amr_pipeline
+from rag_amr import amr_pipeline
 from DuRAG.eval.rag_eval import RAGeval
 from DuRAG.rds import db
 import argparse
@@ -9,9 +9,9 @@ import json
 load_dotenv()
 
 
-# def parse_args():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("--retrieval", type=str, required=True)
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--retrieval", type=str, required=True)
 #     parser.add_argument("--extract_keyword", action="store_true", default=False)
 
 #     return parser.parse_args()
@@ -21,7 +21,14 @@ if __name__ == "__main__":
     evaluation = RAGeval()
     with open('generated_question.json','r') as f:
         data = [json.loads(line) for line in f]
-    # args = parse_args()
+    args = parse_args()
+    if args.retrieval == "amr":
+        pipeline = amr_pipeline
+    elif args.retrieval == "swr":
+        pipeline = swr_pipeline
+    else: 
+        print("Invalid retrieval method")
+        exit(1)
     # with db.get_cursor() as cur:
     #     cur.execute("""SELECT question, pdf_document_name FROM "QUESTION_BANK" """)
     #     questions = cur.fetchall()
@@ -38,7 +45,7 @@ if __name__ == "__main__":
         print("Question: " + query)
         print("-" * 100)
 
-        response, retrieved = swr_pipeline(query, filters)
+        response, retrieved = pipeline(query, filters)
         
         retrieved_text = "".join(
             [retrieved[i][0][2] for i in range(len(retrieved))]

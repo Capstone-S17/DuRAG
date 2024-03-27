@@ -14,7 +14,7 @@ class AutoMergingRetriever(Retriever):
         self.rds_cursor.execute(
             f"""SELECT * FROM "amr_nodes" WHERE chunk_id = '{uuid}'"""
         )
-        print(self.rds_cursor.fetchall())
+        # print(self.rds_cursor.fetchall())
         return self.rds_cursor.fetchall()
 
     def aggregate_chunks(self, chunks):
@@ -61,3 +61,18 @@ class AutoMergingRetriever(Retriever):
         # second aggregation
         second_aggregation = self.aggregate_chunks(first_aggregation)
         return second_aggregation
+
+    # @classmethod
+    # def text_joiner(cls, node: list[tuple[str, str]]) -> str:
+    #     return " ".join(i[1] for i in node)
+
+    @classmethod
+    def get_rerank_format(
+        cls, query: str, response_ojects
+    ):
+        leaf_chunks = []
+        for i in response_ojects:
+            leaf_chunks.append(
+                (i.uuid, query, i.properties["content"], i.properties["pdf_name"])
+            )
+        return leaf_chunks
