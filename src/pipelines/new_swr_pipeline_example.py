@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from DuRAG.rds import db
 from DuRAG import Reranker, SentenceWindowRetriever, Generator, RetrievalObject
 import logging
+from DuRAG.logger import logger
 from pydantic import BaseModel
 
 load_dotenv()
@@ -20,8 +21,14 @@ class RagResponse(BaseModel):
     chunks: list[RetrievalObject]
 
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logging.getLogger("DuRAG").setLevel(logging.DEBUG)
+
+# Create a console handler and set the log level
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+
+# Add the console handler to the logger
+logging.getLogger("DuRAG").addHandler(console_handler)
 
 
 def execute_sql(cursor, query, params):
@@ -63,10 +70,10 @@ def pipeline(query_obj: QueryObj):
         filter_params = swr_retriever._get_filter_param(
             names, mode="or", property_name="pdf_name"
         )
-        print(f"{filter_params=}")
+        logging.debug(f"{filter_params=}")
 
         generator = Generator()
-        print(
+        logging.debug(
             generator.query_summary(
                 "What is the percentage of shares held by the largest shareholder of Samurai 2K Aerosol Limited as of 27 June 2023?"
             )
