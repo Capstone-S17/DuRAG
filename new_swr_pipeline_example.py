@@ -66,6 +66,11 @@ def pipeline(query_obj: QueryObj):
         print(f"{filter_params=}")
 
         generator = Generator()
+        print(
+            generator.query_summary(
+                "What is the percentage of shares held by the largest shareholder of Samurai 2K Aerosol Limited as of 27 June 2023?"
+            )
+        )
         bge_query = BGE_QUERY_PREFIX + query_obj.query
         retrieval_response = swr_retriever.hybrid_search(
             bge_query, limit=10, filter_params=filter_params

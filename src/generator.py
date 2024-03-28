@@ -62,6 +62,10 @@ Query: {}
 
 """
 
+QUERY_SUMMARIZER_PROMPT = """
+Summarise the following query in only 3-4 words, keep the most important keywords. Only output the summary.\n\nQuery: {}\nSummary:
+"""
+
 
 class Generator:
     def __init__(self, use_google_api=True):
@@ -112,12 +116,12 @@ class Generator:
         prompt = QUERY_ENTITY_PROMPT.format(query)
 
         output = self.gemini.generate_content(prompt, stream=False)
-        #print(output.text)
+        # print(output.text)
         try:
-          filter_list = json.loads(output.text)
-        except: ## Return empty string
-          return []
-        #print(filter_list)
+            filter_list = json.loads(output.text)
+        except:  ## Return empty string
+            return []
+        # print(filter_list)
         ## Need check if filters are generated
         if len(filter_list) == 0:
             return []
@@ -138,6 +142,11 @@ class Generator:
             out.append(r)
             print(r.text, end="")
         return " ".join(out)
+
+    def query_summary(self, query: str) -> str:
+        prompt = QUERY_SUMMARIZER_PROMPT.format(query)
+        response = self.gemini.generate_content(prompt)
+        return response.text
 
     # def query_expansion(self, query: str) -> str:
     #     prompt = QUERY_EXPANSION_PROMPT.format(query)
