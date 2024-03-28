@@ -1,3 +1,4 @@
+from DuRAG.retriever.RetrievalObject import RetrievalObject
 from FlagEmbedding import FlagReranker
 
 
@@ -19,30 +20,23 @@ class Reranker:
         self.reranker = FlagReranker(model_name, use_fp16=use_fp16)
 
     def rerank_top_k(
-        self, triples: list[tuple[str, str, str]], k: int = 5
-    ) -> list[tuple[tuple[str, str, str], float]]:
+        self, retrieval_objects: list[RetrievalObject], k: int = 5
+    ) -> list[RetrievalObject]:
         """
-        Reranks a list of pairs and returns the top `k` pairs based on the scores from the reranker model.
+        Reranks the top k retrieval_objects based on the computed scores.
 
         Args:
-            pairs: A list of pairs (query, chunk) to be reranked.
-            k: The number of top pairs to return after reranking.
+            retrieval_objects: A list of RetrievalObject instances to be reranked.
+            k. The number of top objects to be retures. Defaults to 5.
 
         Returns:
-            A list of the top `k` reranked pairs, each with associated scores.
-
-        The method computes scores for each pair using the reranker model and sorts the list
-        in descending order based on these scores. It then returns the top `k` pairs from this sorted list.
+            list[RetrievalObject]: The top k reranked RetrievalObject instances.
         """
-        # we need list[tuple[str, str]] but i have list[tuple[str, str, str]]
-        pairs_formatted = [(pair[1], pair[2]) for pair in triples]
-        scores = self.reranker.compute_score(pairs_formatted)
+        pairs = [(obj.query, obj.chunk) for obj in retrieval_objects]
+        scores = self.reranker.compute_score(pairs)
 
-        # sort on the original triples
-        scored_pairs = list(zip(triples, scores))
+        for obj, score in zip(retrieval_objects, scores):
+            obj.score = score
 
-        scored_pairs.sort(key=lambda x: x[1], reverse=True)
-
-        top_k_pairs = scored_pairs[:k]
-
-        return top_k_pairs
+        retrieval_objects.sort(key=lambda x: x.score, reverse=True)
+        return retrieval_objects[:k]

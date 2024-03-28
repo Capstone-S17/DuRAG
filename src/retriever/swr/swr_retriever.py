@@ -3,6 +3,37 @@ from DuRAG.retriever.retriever import Retriever
 import pkg_resources
 
 
+class SentenceWindow:
+    def __init__(
+        self,
+        left_uuid,
+        left_content,
+        center_uuid,
+        center_content,
+        right_uuid,
+        right_content,
+        pdf_name,
+    ):
+        self.left_uuid = left_uuid
+        self.left_content = left_content
+        self.center_uuid = center_uuid
+        self.center_content = center_content
+        self.right_uuid = right_uuid
+        self.right_content = right_content
+        self.pdf_name = pdf_name
+
+    def __str__(self):
+        return f"SentenceWindow(\n  PDF: {self.pdf_name}\n  Left: [{self.left_uuid}] {self.left_content}\n  Center: [{self.center_uuid}] {self.center_content}\n  Right: [{self.right_uuid}] {self.right_content}\n)"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def joined_text(self) -> str:
+        # Join the content from left, center, and right while handling None values
+        contents = [self.left_content, self.center_content, self.right_content]
+        return " ".join(content for content in contents if content)
+
+
 class SentenceWindowRetriever(Retriever):
     """
     Class to retrieve 128 token chunks from Weaviate then adds the before and after chunks.
@@ -32,56 +63,57 @@ class SentenceWindowRetriever(Retriever):
     def retrieve_by_uuid(self, uuid):
         return self.collection.query.fetch_object_by_id(uuid)
 
-    def get_sentence_windows(self, response_objects) -> list[list[tuple[str, str]]]:
-        sentence_window_included = []
+    def get_sentence_windows(self, response_objects) -> list[SentenceWindow]:
+        sentence_windows = []
         for o in response_objects:
-            window_data = []
+            left_uuid, left_content, right_uuid, right_content = (
+                None,
+                None,
+                None,
+                None,
+            )
             retrieved_uuid = o.uuid
             fetch_window = self.sentence_window_map.get(str(retrieved_uuid))
             if fetch_window:
                 left, right = fetch_window
-                # Fetch and append the left chunk if it exists
                 if left is not None:
                     left_data = self.retrieve_by_uuid(left)
-                    window_data.append(
-                        (
-                            left_data.uuid,
-                            left_data.properties["content"],
-                            left_data.properties["pdf_name"],
-                        )
-                    )
-                # Append the original chunk
-                window_data.append(
-                    (o.uuid, o.properties["content"], o.properties["pdf_name"])
-                )
-                # Fetch and append the right chunk if it exists
+                    left_uuid = left_data.uuid
+                    left_content = left_data.properties["content"]
+                center_uuid = o.uuid
+                center_content = o.properties["content"]
                 if right is not None:
                     right_data = self.retrieve_by_uuid(right)
-                    window_data.append(
-                        (
-                            right_data.uuid,
-                            right_data.properties["content"],
-                            right_data.properties["pdf_name"],
-                        )
-                    )
+                    right_uuid = right_data.uuid
+                    right_content = right_data.properties["content"]
             else:
-                # If there's no mapping found, just append the original chunk
-                window_data.append(
-                    (o.uuid, o.properties["content"], o.properties["pdf_name"])
-                )
+                # If there's no mapping found, just use the original chunk
+                center_uuid = o.uuid
+                center_content = o.properties["content"]
                 # this should never happen lol
-            sentence_window_included.append(window_data)
-        return sentence_window_included
+            pdf_name = o.properties["pdf_name"]
+            window = SentenceWindow(
+                left_uuid,
+                left_content,
+                center_uuid,
+                center_content,
+                right_uuid,
+                right_content,
+                pdf_name,
+            )
+            sentence_windows.append(window)
+        return sentence_windows
 
     @classmethod
-    def window_text_joiner(cls, window: list[tuple[str, str]]) -> str:
-        return " ".join(i[1] for i in window)
-
-    @classmethod
-    def get_rerank_format(
-        cls, query: str, sentence_windows: list[list[tuple[str, str, str]]]
-    ):
-        return [
-            (window[0][0], query, cls.window_text_joiner(window), window[0][2])
-            for window in sentence_windows
-        ]
+    def get_rerank_format(cls, query: str, sentence_windows: list[SentenceWindow]):
+        rerank_data = []
+        for window in sentence_windows:
+            # Create a tuple for reranking format using the UUID of the center chunk
+            rerank_tuple = (
+                window.center_uuid,
+                query,
+                window.joined_text(),
+                window.pdf_name,
+            )
+            rerank_data.append(rerank_tuple)
+        return rerank_data

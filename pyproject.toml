@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "DuRAG"
-version = "0.1.0"
-description = "death to llama-index"
+version = "0.2.0"
+description = "Custom RAG model for Financial Documents"
 authors = [{ name = "capstoners" }]
 dependencies = [
   "python-dotenv",
