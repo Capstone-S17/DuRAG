@@ -1,5 +1,6 @@
 from DuRAG.retriever.RetrievalObject import RetrievalObject
 from FlagEmbedding import FlagReranker
+from DuRAG.logger import logger
 
 
 class Reranker:
@@ -17,7 +18,9 @@ class Reranker:
         The Reranker class utilizes a pre-trained model to rerank a list of input pairs (query, chunk).
         """
         # Initialize the FlagReranker with the given model and precision setting.
+        logger.info(f"Initializing reranker with model: {model_name}")
         self.reranker = FlagReranker(model_name, use_fp16=use_fp16)
+        logger.info("Reranker initialized successfully")
 
     def rerank_top_k(
         self, retrieval_objects: list[RetrievalObject], k: int = 5
@@ -32,8 +35,24 @@ class Reranker:
         Returns:
             list[RetrievalObject]: The top k reranked RetrievalObject instances.
         """
+        if not retrieval_objects:
+            logger.critical("No retrieval objects provided, returning an empty list.")
+            return []
+
+        if len(retrieval_objects) == 1:
+            logger.warning("Only one retrieval object provided, skipping reranking.")
+            return retrieval_objects
+
+        logger.debug(f"Reranker received {len(retrieval_objects)=}")
         pairs = [(obj.query, obj.chunk) for obj in retrieval_objects]
-        scores = self.reranker.compute_score(pairs)
+
+        try:
+            scores = self.reranker.compute_score(pairs)
+            logger.debug("scores: ", scores)
+        except ValueError as e:
+            logger.error(f"Error during reranking: {e}")
+            logger.error("Returning the original retrieval objects.")
+            return retrieval_objects
 
         for obj, score in zip(retrieval_objects, scores):
             obj.score = score
