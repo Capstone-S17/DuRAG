@@ -1,5 +1,5 @@
 import uuid
-from rds import db
+from DuRAG.rds import db
 from tqdm import tqdm
 from llama_index.core.node_parser.text.sentence import SentenceSplitter
 

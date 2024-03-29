@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "DuRAG"
-version = "0.2.0"
+version = "0.2.1"
 description = "Custom RAG model for Financial Documents"
 authors = [{ name = "capstoners" }]
 dependencies = [

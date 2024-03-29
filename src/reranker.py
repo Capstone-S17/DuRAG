@@ -48,7 +48,7 @@ class Reranker:
 
         try:
             scores = self.reranker.compute_score(pairs)
-            logger.debug("scores: ", scores)
+            logger.debug(f"{scores=}")
         except ValueError as e:
             logger.error(f"Error during reranking: {e}")
             logger.error("Returning the original retrieval objects.")

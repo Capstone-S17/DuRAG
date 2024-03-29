@@ -1,74 +1,106 @@
-from DuRAG import Reranker, AutoMergingRetriever, Generator
+from DuRAG import Reranker, AutoMergingRetriever, Generator, RetrievalObject
 from DuRAG.rds import db
-
 import weaviate
+from dotenv import load_dotenv
+import logging
+from pydantic import BaseModel
+from DuRAG.logger import logger
 
 
-def amr_pipeline(query: str, filters):
+load_dotenv()
 
-    # Process results
-    # print("Sentence Window response: \n\n")
-    # for result in reranked_results:
-    #     print("-" * 100)
-    #     print(result)
+BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 
-    # reranked_context = [reranked_results[i][0][2] for i in range(len(reranked_results))]
-    # response = generator.response_synthesis(reranked_context, query)
 
-    # return response, reranked_results
+class QueryObj(BaseModel):
+    query: str
+    filters: list[int]  # pdf_ids
 
-    BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
-    client = weaviate.connect_to_local()
-    reranker = Reranker()
-    bge_query = BGE_QUERY_PREFIX + query
+
+class RagResponse(BaseModel):
+    message: str
+    chunks: list[RetrievalObject]
+
+
+logging.getLogger("DuRAG").setLevel(logging.DEBUG)
+
+# Create a console handler and set the log level
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+
+# Add the console handler to the logger
+logging.getLogger("DuRAG").addHandler(console_handler)
+
+
+def execute_sql(cursor, query, params):
+    try:
+        cursor.execute(query, params)
+        return cursor.fetchall()
+    except Exception as e:
+        logger.error(f"An error occurred executing SQL: {e}")
+        raise
+
+
+def get_pdf_names(cursor, filters):
+    return execute_sql(
+        cursor,
+        """SELECT pdf_document_name FROM "EXTRACTED_PDF" WHERE id IN %s""",
+        (tuple(filters),),
+    )
+
+
+def amr_pipeline(query_obj: QueryObj):
     with db.get_cursor() as rds_cursor:
-        amr_engine = AutoMergingRetriever(client, rds_cursor)
-        filter_params = amr_engine._get_filter_param(filters, mode="or", property_name="pdf_name")
-        retrieval_response = amr_engine.hybrid_search(bge_query, filter_params=filter_params, limit=10)
-        # need to do reranking but also keep a lot of information
-        # reranked_results = reranker.rerank_top_k(reranke)
-        # retrieval_response = amr_engine.full_text_search(query, filters=None, limit=10)
-        # retrieval_response = amr_engine.semantic_search(query, filters=None, limit=10)
+        names = [name for (name,) in get_pdf_names(rds_cursor, query_obj.filters)]
+        logger.info(names)
 
-        rerank_format = amr_engine.get_rerank_format(query, retrieval_response.objects)
-        reranked_chunks = reranker.rerank_top_k(rerank_format, 5)
-        # print(reranked_results)
-        merged_chunks = amr_engine.retrieve(retrieval_response.objects)
-        
-        f = lambda i:lambda x: x.uuid == i[0][0]
-        reranked_results = []
-        for i in reranked_chunks:
-            merged = list(filter(f(i), merged_chunks))[0]
-            print("-" * 100)
-            print("original text: ", i[0][2], "\n")
-            print("merged text: ", merged.properties["content"])
-            l = list(i[0])
-            l[2] = merged.properties["content"]
-            t0 = tuple(l)
-            t = (t0, i[1])
-            reranked_results.append(t)
+        pdf_name_to_id_map = dict(zip(names, query_obj.filters))
 
-            # rds_cursor.execute(
-            #     """SELECT pdf_page_id FROM "amr_nodes" WHERE chunk_id = %s """, (str(t[0][0]),)
-            # )
-            # pdf_page_id = rds_cursor.fetchall()
-            # print(pdf_page_id)
-            # rds_cursor.execute(
-            #     """SELECT page_num FROM "EXTRACTED_PDF_PAGE" WHERE id = %s """, (str(pdf_page_id[0][0]),)
-            # )
-            # page_num = rds_cursor.fetchall()
-            # print(page_num)
-        
+        client = weaviate.connect_to_local()
+
+        amr_retriever = AutoMergingRetriever(client, rds_cursor)
+        filter_params = amr_retriever._get_filter_param(
+            names, mode="or", property_name="pdf_name"
+        )
+        logger.debug(f"Filter params: {filter_params}")
+
+        bge_query = BGE_QUERY_PREFIX + query_obj.query
+        retrieval_response = amr_retriever.hybrid_search(
+            bge_query, filter_params=filter_params, limit=100
+        )
+        logger.debug(f"Retrieval response: {retrieval_response.objects}")
+
+        retrieval_objects = [
+            RetrievalObject(
+                uuid=str(chunk.uuid),
+                query=query_obj.query,
+                chunk=chunk.properties["content"],
+                pdf_name=chunk.properties["pdf_name"],
+            )
+            for chunk in retrieval_response.objects
+        ]
+
+        # aggregate chunks by 1 level
+        first_level_aggregation = amr_retriever.aggregate_chunks(retrieval_objects)
+
+        # rerank after first level aggregation
+        reranker = Reranker()
+        reranked_objects = reranker.rerank_top_k(
+            first_level_aggregation, len(first_level_aggregation)
+        )
+
+        # add more context to the chunks
+        second_level_aggregation = amr_retriever.aggregate_chunks(reranked_objects)
+        client.close()
+
+        # Prepare the context for the generator model by removing the query
+        generator_context = [obj.chunk for obj in reranked_objects]
         generator = Generator()
-        reranked_context = [reranked_results[i][0][2] for i in range(len(reranked_results))]
-        response = generator.response_synthesis(reranked_context, query)
+        response = generator.response_synthesis(generator_context, query_obj.query)
 
-        
-
-        return response, merged_chunks
+        return RagResponse(message=response, chunks=second_level_aggregation)
 
 
 if __name__ == "__main__":
-    amr_pipeline(
-        "What is the deadline for submitting questions to the company prior to the AGM?", ['SG230712OTHRO2AC_Pan Hong Holdings Group Limited_20230712000140_00_AR_4Q_20230331.1.pdf']
-    )
+    test_query = QueryObj(query="What is ascent bridge", filters=[247, 305, 205])
+    amr_pipeline(test_query)

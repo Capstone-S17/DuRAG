@@ -11,3 +11,4 @@ class RetrievalObject(BaseModel):
     pdf_page_id: Optional[int] = None
     pdf_page_num: Optional[int] = None
     pdf_id: Optional[int] = None
+    amr_parent_id: Optional[str] = None

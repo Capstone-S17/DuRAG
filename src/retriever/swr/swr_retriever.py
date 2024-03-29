@@ -104,16 +104,16 @@ class SentenceWindowRetriever(Retriever):
             sentence_windows.append(window)
         return sentence_windows
 
-    @classmethod
-    def get_rerank_format(cls, query: str, sentence_windows: list[SentenceWindow]):
-        rerank_data = []
-        for window in sentence_windows:
-            # Create a tuple for reranking format using the UUID of the center chunk
-            rerank_tuple = (
-                window.center_uuid,
-                query,
-                window.joined_text(),
-                window.pdf_name,
-            )
-            rerank_data.append(rerank_tuple)
-        return rerank_data
+    # @classmethod
+    # def get_rerank_format(cls, query: str, sentence_windows: list[SentenceWindow]):
+    #     rerank_data = []
+    #     for window in sentence_windows:
+    #         # Create a tuple for reranking format using the UUID of the center chunk
+    #         rerank_tuple = (
+    #             window.center_uuid,
+    #             query,
+    #             window.joined_text(),
+    #             window.pdf_name,
+    #         )
+    #         rerank_data.append(rerank_tuple)
+    #     return rerank_data
