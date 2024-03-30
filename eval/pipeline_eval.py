@@ -15,11 +15,9 @@ load_dotenv()
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--retrieval", type=str, required=True)
+    parser.add_argument("--output_file_name",type=str,required=True) 
 
 
-#     parser.add_argument("--extract_keyword", action="store_true", default=False)
-
-#     return parser.parse_args()
 
 def write_json(data, path):
     f = open(path, mode='a', encoding='utf-8')
@@ -27,10 +25,13 @@ def write_json(data, path):
     f.write('\n')
     f.close()
 if __name__ == "__main__":
-    evaluation = RAGeval()
-    with open("generated_question.json", "r") as f:
-        data = [json.loads(line) for line in f]
+    
     args = parse_args()
+    
+    with open("eval_set_500.json", "r") as f:
+        data = [json.loads(line) for line in f]
+    output_file = args.output_file_name
+    
     if args.retrieval == "amr":
         pipeline = amr_pipeline
     elif args.retrieval == "swr":
@@ -39,13 +40,14 @@ if __name__ == "__main__":
         print("Invalid retrieval method")
         exit(1)
     
-    with open('eval.json','r') as f:
-        curr = [json.loads(line) for line in f]
-    if len(curr)>0:
-        start = len(curr)
+    with open('eval_set_500.json','r') as f:
+        data = [json.loads(line) for line in f]
+    if len(data)>0:
+        start = len(data)
         print(f"RESUMING FROM {start}")
     else:
         start = 0
+        
     for i in tqdm(range(start,len(data))):
         query = data[i]["question"]
         filters = [data[i]["pdf_name"]]
@@ -64,6 +66,6 @@ if __name__ == "__main__":
             
             
         }
-    
-        write_json(eval_object,'eval.json')
+       
+        write_json(eval_object,f"{output_dir}.json")
       
