@@ -106,7 +106,7 @@ def swr_pipeline(query_obj: QueryObj):
 
             print(result)
 
-        return RagResponse(message=response, chunks=retrieval_objects)
+        return RagResponse(message=response, chunks=reranked_objects)
 
 
 if __name__ == "__main__":
