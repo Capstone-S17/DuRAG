@@ -1,25 +1,16 @@
-from DuRAG import Reranker, AutoMergingRetriever, Generator, RetrievalObject
-from DuRAG.rds import db
+import logging
+
 import weaviate
 from dotenv import load_dotenv
-import logging
-from pydantic import BaseModel
-from DuRAG.logger import logger
 
+from DuRAG import (AutoMergingRetriever, Generator, QueryObj, RagResponse,
+                   Reranker, RetrievalObject)
+from DuRAG.logger import logger
+from DuRAG.rds import db
 
 load_dotenv()
 
 BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
-
-
-class QueryObj(BaseModel):
-    query: str
-    filters: list[int]  # pdf_ids
-
-
-class RagResponse(BaseModel):
-    message: str
-    chunks: list[RetrievalObject]
 
 
 logging.getLogger("DuRAG").setLevel(logging.DEBUG)

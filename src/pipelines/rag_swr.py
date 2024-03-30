@@ -1,25 +1,16 @@
+import logging
+
 import weaviate
 from dotenv import load_dotenv
-from DuRAG.rds import db
-from DuRAG import Reranker, SentenceWindowRetriever, Generator, RetrievalObject
-import logging
+
+from DuRAG import (Generator, QueryObj, RagResponse, Reranker, RetrievalObject,
+                   SentenceWindowRetriever)
 from DuRAG.logger import logger
-from pydantic import BaseModel
+from DuRAG.rds import db
 
 load_dotenv()
 
 BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
-
-
-class QueryObj(BaseModel):
-    query: str
-    filters: list[int]  # pdf_ids
-
-
-class RagResponse(BaseModel):
-    message: str
-    chunks: list[RetrievalObject]
-
 
 logging.getLogger("DuRAG").setLevel(logging.DEBUG)
 
@@ -96,7 +87,7 @@ def swr_pipeline(query_obj: QueryObj):
         client.close()
 
         # Rerank the retrieved results
-        reranked_objects = reranker.rerank_top_k(retrieval_objects, 5)
+        reranked_objects = reranker.rerank_top_k(retrieval_objects, 10)
 
         # Prepare the context for the generator model by removing the query
         generator_context = [obj.chunk for obj in reranked_objects]

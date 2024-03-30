@@ -1,10 +1,12 @@
-from rag_swr import swr_pipeline
-from rag_amr import amr_pipeline
-from DuRAG.eval.rag_eval import RAGeval
-from DuRAG.rds import db
 import argparse
-from dotenv import load_dotenv
 import json
+
+from dotenv import load_dotenv
+
+from DuRAG.eval.rag_eval import RAGeval
+from DuRAG.pipelines.rag_amr import amr_pipeline
+from DuRAG.pipelines.rag_swr import swr_pipeline
+from DuRAG.rds import db
 
 load_dotenv()
 
@@ -12,6 +14,8 @@ load_dotenv()
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--retrieval", type=str, required=True)
+
+
 #     parser.add_argument("--extract_keyword", action="store_true", default=False)
 
 #     return parser.parse_args()
@@ -19,14 +23,14 @@ def parse_args():
 
 if __name__ == "__main__":
     evaluation = RAGeval()
-    with open('generated_question.json','r') as f:
+    with open("generated_question.json", "r") as f:
         data = [json.loads(line) for line in f]
     args = parse_args()
     if args.retrieval == "amr":
         pipeline = amr_pipeline
     elif args.retrieval == "swr":
         pipeline = swr_pipeline
-    else: 
+    else:
         print("Invalid retrieval method")
         exit(1)
     # with db.get_cursor() as cur:
@@ -46,10 +50,8 @@ if __name__ == "__main__":
         print("-" * 100)
 
         response, retrieved = pipeline(query, filters)
-        
-        retrieved_text = "".join(
-            [retrieved[i][0][2] for i in range(len(retrieved))]
-        )
+
+        retrieved_text = "".join([retrieved[i][0][2] for i in range(len(retrieved))])
         # print(retrieved_text)
         # docs = []
         # for r in retrieved:
@@ -74,7 +76,5 @@ if __name__ == "__main__":
             "context_relevance_score",
             eval_dict["context_relevance_score"] / (i + 1),
         )
-        print(
-            "answer_relevance_score", eval_dict["answer_relevance_score"] / (i + 1)
-        )
+        print("answer_relevance_score", eval_dict["answer_relevance_score"] / (i + 1))
         print("groundness_score", eval_dict["groundness_score"] / (i + 1))

@@ -1,7 +1,9 @@
-from vertexai.preview.generative_models import GenerativeModel, GenerationConfig
-import google.generativeai as genai
-import os
 import json
+import os
+
+import google.generativeai as genai
+from vertexai.preview.generative_models import (GenerationConfig,
+                                                GenerativeModel)
 
 RAG_PROMPT = """
 You are an expert in the field of finance and legal reasoning. 
@@ -78,19 +80,9 @@ class Generator:
         self.gemini = GenerativeModel(
             "gemini-pro", generation_config=self.generation_config
         )
-        self.palm_bison = GenerativeModel(
-            "chat-bison", generation_config=self.generation_config
-        )
 
-    def response_synthesis(
-        self, retrieved_text: list, query: str, use_gemini=True
-    ) -> str:
-        if use_gemini:
-            out = self._gemini_generation(retrieved_text, query)
-        else:
-            out = self._palm_generation(retrieved_text, query)
-
-        return out
+    def response_synthesis(self, retrieved_text: list, query: str) -> str:
+        return self._gemini_generation(retrieved_text, query)
 
     def _gemini_generation(self, retrieved_text: list, query) -> str:
         context_str = ""
@@ -126,22 +118,6 @@ class Generator:
         if len(filter_list) == 0:
             return []
         return filter_list
-
-    def _palm_generation(self, retrieved_text: list, query) -> str:
-        context_str = ""
-        for i in range(len(retrieved_text)):
-            chunk = str(i + 1) + " " + retrieved_text[i]
-            context_str += chunk
-
-        prompt = DEFAULT_TEXT_QA_PROMPT_TMPL.format(retrieved_text, query)
-
-        response = self.palm_bison.generate_content(prompt, stream=True)
-        out = []
-
-        for r in response:
-            out.append(r)
-            print(r.text, end="")
-        return " ".join(out)
 
     def query_summary(self, query: str) -> str:
         prompt = QUERY_SUMMARIZER_PROMPT.format(query)

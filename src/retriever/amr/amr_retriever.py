@@ -1,7 +1,8 @@
-from DuRAG.retriever.retriever import Retriever
-from DuRAG.retriever.RetrievalObject import RetrievalObject
-from DuRAG.logger import logger
 from collections import defaultdict
+
+from DuRAG.logger import logger
+from DuRAG.retriever.RetrievalObject import RetrievalObject
+from DuRAG.retriever.retriever import Retriever
 
 
 class AutoMergingRetriever(Retriever):

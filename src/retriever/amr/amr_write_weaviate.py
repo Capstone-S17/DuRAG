@@ -1,11 +1,12 @@
+from typing import Any
+
 import weaviate
 import weaviate.classes as wvc
+from tqdm import tqdm
 from weaviate import WeaviateClient
 from weaviate.collections import Collection
-from tqdm import tqdm
-from typing import Any
-from DuRAG.rds import db
 
+from DuRAG.rds import db
 
 weaviate_client = weaviate.connect_to_local()
 
