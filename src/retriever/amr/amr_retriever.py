@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from DuRAG.logger import logger
-from DuRAG.retriever.RetrievalObject import RetrievalObject
+from DuRAG.retriever.data_models import RetrievalObject
 from DuRAG.retriever.retriever import Retriever
 
 
@@ -49,17 +49,3 @@ class AutoMergingRetriever(Retriever):
                 aggregated_chunks.extend(chunks)
 
         return aggregated_chunks
-
-    # def retrieve(self, response):
-    #     """
-    #     from all the retrieved chunks, iterate through them and first
-    #     find the parent chunks. If 2 or more chunks have the same parent,
-    #     replace the smaller chunk with the parent chunk. Check again if the
-    #     parent chunks have the same parent, if so, replace the smaller chunk
-    #     with the parent chunk.
-    #     """
-    #     # first aggregation
-    #     first_aggregation = self.aggregate_chunks(response)
-    #     # second aggregation
-    #     second_aggregation = self.aggregate_chunks(first_aggregation)
-    #     return second_aggregation

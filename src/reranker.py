@@ -1,7 +1,7 @@
 from FlagEmbedding import FlagReranker
 
 from DuRAG.logger import logger
-from DuRAG.retriever.RetrievalObject import RetrievalObject
+from DuRAG.retriever.data_models import RetrievalObject
 
 
 class Reranker:

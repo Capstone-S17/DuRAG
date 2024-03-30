@@ -3,10 +3,12 @@ import logging
 import weaviate
 from dotenv import load_dotenv
 
-from DuRAG import (AutoMergingRetriever, Generator, QueryObj, RagResponse,
-                   Reranker, RetrievalObject)
+from DuRAG.generator import Generator
 from DuRAG.logger import logger
 from DuRAG.rds import db
+from DuRAG.reranker import Reranker
+from DuRAG.retriever.amr.amr_retriever import AutoMergingRetriever
+from DuRAG.retriever.data_models import QueryObj, RagResponse, RetrievalObject
 
 load_dotenv()
 
