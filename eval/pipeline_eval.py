@@ -1,5 +1,6 @@
 import argparse
 import json
+from tqdm import tqdm
 
 from dotenv import load_dotenv
 
@@ -20,7 +21,11 @@ def parse_args():
 
 #     return parser.parse_args()
 
-
+def write_json(data, path):
+    f = open(path, mode='a', encoding='utf-8')
+    json.dump(data, f, ensure_ascii=True)
+    f.write('\n')
+    f.close()
 if __name__ == "__main__":
     evaluation = RAGeval()
     with open("generated_question.json", "r") as f:
@@ -33,48 +38,32 @@ if __name__ == "__main__":
     else:
         print("Invalid retrieval method")
         exit(1)
-    # with db.get_cursor() as cur:
-    #     cur.execute("""SELECT question, pdf_document_name FROM "QUESTION_BANK" """)
-    #     questions = cur.fetchall()
-
-    eval_dict = {
-        "groundness_score": 0,
-        "answer_relevance_score": 0,
-        "context_relevance_score": 0,
-    }
-
-    for i in range(len(data)):
+    
+    with open('eval.json','r') as f:
+        curr = [json.loads(line) for line in f]
+    if len(curr)>0:
+        start = len(curr)
+        print(f"RESUMING FROM {start}")
+    else:
+        start = 0
+    for i in tqdm(range(start,len(data))):
         query = data[i]["question"]
         filters = [data[i]["pdf_name"]]
         print("Question: " + query)
         print("-" * 100)
 
         response, retrieved = pipeline(query, filters)
-
-        retrieved_text = "".join([retrieved[i][0][2] for i in range(len(retrieved))])
-        # print(retrieved_text)
-        # docs = []
-        # for r in retrieved:
-        #     print(r[0][0])
-        #     cur.execute("""SELECT pdf_document_name FROM chunked_128_sentence_window WHERE chunk_id = %s""", (str(r[0][0]),))
-        #     doc = cur.fetchall()
-        #     docs.extend(doc)
-
-        print("Evaluation: ")
+        
+        retrieved_text = [''.join([retrieved[i][0][2] for i in range(len(retrieved))])]
+        
         eval_object = {
             "question": query,
-            "context": retrieved_text,
-            "generated": response,
+            'contexts':retrieved_text,
+            "answer":response,
+            "ground_truth":data[i]['answer']
+            
+            
         }
-
-        out = evaluation.assess_single_retrieval(**eval_object)
-        eval_dict["groundness_score"] += out["groundness_score"]
-        eval_dict["answer_relevance_score"] += out["answer_relevance_score"]
-        eval_dict["context_relevance_score"] += out["context_relevance_score"]
-
-        print(
-            "context_relevance_score",
-            eval_dict["context_relevance_score"] / (i + 1),
-        )
-        print("answer_relevance_score", eval_dict["answer_relevance_score"] / (i + 1))
-        print("groundness_score", eval_dict["groundness_score"] / (i + 1))
+    
+        write_json(eval_object,'eval.json')
+      
