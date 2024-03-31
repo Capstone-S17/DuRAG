@@ -87,20 +87,14 @@ class Generator:
     def _gemini_generation(self, retrieved_text: list, query) -> str:
         context_str = ""
         for i in range(len(retrieved_text)):
-            chunk = str(i + 1) + " " + retrieved_text[i]
-            context_str += chunk
+            chunk = f"###Context:{str(i + 1)}" + " " + retrieved_text[i]
+            context_str += chunk+'\n'
 
         prompt = RAG_PROMPT.format(retrieved_text, query)
 
-        response = self.gemini.generate_content(prompt, stream=True)
-        out = []
-        print("Generated Answer: ")
+        response = self.gemini.generate_content(prompt, stream=False)
         try:
-            for r in response:
-                out.append(r.text)
-                print(r.text, end="")
-            print("\n")
-            return " ".join(out)
+            return response.text
         except:
             return ""
 
