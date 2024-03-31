@@ -1,3 +1,8 @@
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 from .generator import Generator
 from .reranker import Reranker
 from .retriever.amr.amr_retriever import AutoMergingRetriever
