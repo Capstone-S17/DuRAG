@@ -66,6 +66,7 @@ def amr_pipeline(query_obj: QueryObj):
                 query=query_obj.query,
                 chunk=chunk.properties["content"],
                 pdf_name=chunk.properties["pdf_name"],
+                pdf_id = pdf_name_to_id_map[chunk.properties["pdf_name"]]
             )
             for chunk in retrieval_response.objects
         ]

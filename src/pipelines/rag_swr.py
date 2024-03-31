@@ -80,6 +80,7 @@ def swr_pipeline(query_obj: QueryObj):
                 query=query_obj.query,
                 chunk=window_obj.joined_text(),
                 pdf_name=window_obj.pdf_name,
+                pdf_id = pdf_name_to_id_map[window_obj.pdf_name]
             )
             for window_obj in sentence_windows
         ]
