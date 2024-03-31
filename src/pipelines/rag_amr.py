@@ -49,6 +49,7 @@ def amr_pipeline(query_obj: QueryObj):
         client = weaviate.connect_to_local()
 
         amr_retriever = AutoMergingRetriever(client, rds_cursor)
+        
         filter_params = amr_retriever._get_filter_param(
             names, mode="or", property_name="pdf_name"
         )
@@ -77,7 +78,7 @@ def amr_pipeline(query_obj: QueryObj):
         # rerank after first level aggregation
         reranker = Reranker()
         reranked_objects = reranker.rerank_top_k(
-            first_level_aggregation, len(first_level_aggregation)
+            first_level_aggregation, 10
         )
 
         # add more context to the chunks
@@ -85,7 +86,7 @@ def amr_pipeline(query_obj: QueryObj):
         client.close()
 
         # Prepare the context for the generator model by removing the query
-        generator_context = [obj.chunk for obj in reranked_objects]
+        generator_context = [obj.chunk for obj in second_level_aggregation]
         generator = Generator()
         response = generator.response_synthesis(generator_context, query_obj.query)
 

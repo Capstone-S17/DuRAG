@@ -47,7 +47,7 @@ def get_page_details(cursor, uuid):
     )
 
 
-def swr_pipeline(query_obj: QueryObj):
+def swr_pipeline(query_obj: QueryObj, limit = 100, alpha = 0.5):
     with db.get_cursor() as cur:
         names = [name for (name,) in get_pdf_names(cur, query_obj.filters)]
         logger.info(names)
@@ -65,7 +65,10 @@ def swr_pipeline(query_obj: QueryObj):
         generator = Generator()
         bge_query = BGE_QUERY_PREFIX + query_obj.query
         retrieval_response = swr_retriever.hybrid_search(
-            bge_query, limit=100, filter_params=filter_params
+            bge_query, 
+            limit=limit,
+            alpha=alpha,
+            filter_params=filter_params
         )
         logger.debug("retrieval_response: ", retrieval_response.objects)
 
