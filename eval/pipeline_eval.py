@@ -8,6 +8,7 @@ from DuRAG.eval.rag_eval import RAGeval
 from DuRAG.pipelines.rag_amr import amr_pipeline
 from DuRAG.pipelines.rag_swr import swr_pipeline
 from DuRAG.rds import db
+import os.path
 
 load_dotenv()
 
@@ -27,9 +28,8 @@ def write_json(data, path):
 if __name__ == "__main__":
     
     args = parse_args()
-    
     with open("eval_set_500.json", "r") as f:
-        data = [json.loads(line) for line in f]
+        eval_data = [json.loads(line) for line in f]
     output_file = args.output_file_name
     
     if args.retrieval == "amr":
@@ -39,18 +39,19 @@ if __name__ == "__main__":
     else:
         print("Invalid retrieval method")
         exit(1)
-    
-    with open('eval_set_500.json','r') as f:
-        data = [json.loads(line) for line in f]
-    if len(data)>0:
-        start = len(data)
-        print(f"RESUMING FROM {start}")
+    if os.path.isfile(f'{output_file_name}.json'):
+        
+        with open(f'{output_file_name}.json','r') as f:
+            retrieved_data = [json.loads(line) for line in f]
+        if len(retrieved_data)>0:
+            start = len(retrieved_data)
+            print(f"RESUMING FROM {start}")
     else:
         start = 0
         
-    for i in tqdm(range(start,len(data))):
-        query = data[i]["question"]
-        filters = [data[i]["pdf_name"]]
+    for i in tqdm(range(start,len(eval_data))):
+        query = eval_data[i]["question"]
+        filters = [eval_data[i]["pdf_name"]]
         print("Question: " + query)
         print("-" * 100)
 
@@ -65,7 +66,6 @@ if __name__ == "__main__":
             "ground_truth":data[i]['answer']
             
             
-        }
-       
+        }   
         write_json(eval_object,f"{output_dir}.json")
       

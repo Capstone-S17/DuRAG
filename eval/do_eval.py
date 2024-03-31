@@ -39,6 +39,14 @@ def main():
         eval_list.append(out)
        
     df = pd.DataFrame(eval_list)
+    question_list = [data[:100][i]['question'] for i in range(100)]
+    context_list = [data[:100][i]['contexts'] for i in range(100)]
+    generated_ans = [data[:100][i]['answer'] for i in range(100)]
+    ground_truth = [data[:100][i]['ground_truth'] for i in range(100)]
+    df['ground_truth'] = ground_truth
+    df['generated_ans'] = generated_ans
+    df['context_list'] = context_list
+    df['question_list'] = question_list
     df.to_csv('eval_output.csv')
     print(f"Groundness score {df.groundness_score.mean()}")
     print(f"Answer relevance score {df.answer_relevance_score.mean()}")
