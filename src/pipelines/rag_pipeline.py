@@ -6,7 +6,7 @@ from DuRAG.rds import db
 from DuRAG.reranker import Reranker
 from DuRAG.retriever.swr.swr_retriever import SentenceWindowRetriever
 import logging
-from src.retriever.amr.amr_retriever import AutoMergingRetriever
+from DuRAG.retriever.amr.amr_retriever import AutoMergingRetriever
 from DuRAG.retriever.data_models import QueryObj, RagResponse, RetrievalObject
 BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 
@@ -104,7 +104,7 @@ class RAGpipeline:
 
      
             print("Sentence Window response: \n\n")
-            for result in retrieval_objects:
+            for result in reranked_objects:
                 print("-" * 100)
     
                 pdf_page_id, page_num = get_page_details(rds_cursor, result.uuid)[0]
