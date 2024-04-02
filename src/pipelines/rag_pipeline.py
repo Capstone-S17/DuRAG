@@ -101,12 +101,9 @@ class RAGpipeline:
 
             # Rerank the retrieved results
             reranked_objects = self.reranker.rerank_top_k(retrieval_objects, 10)
-
      
             print("Sentence Window response: \n\n")
             for result in reranked_objects:
-                print("-" * 100)
-    
                 pdf_page_id, page_num = get_page_details(rds_cursor, result.uuid)[0]
                 result.pdf_page_id = pdf_page_id
                 result.pdf_page_num = page_num
@@ -158,13 +155,11 @@ class RAGpipeline:
             # add more context to the chunks
             reranked_objects = self.amr_retriever.aggregate_chunks(reranked_objects) 
             for result in reranked_objects:
-                print("-" * 100)
-    
                 pdf_page_id, page_num = get_page_details(rds_cursor, result.uuid)[0]
                 result.pdf_page_id = pdf_page_id
                 result.pdf_page_num = page_num
                 result.pdf_id = pdf_name_to_id_map[result.pdf_name]
-                
+            print(reranked_objects)
         return reranked_objects
 
         
