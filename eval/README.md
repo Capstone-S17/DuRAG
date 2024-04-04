@@ -1,7 +1,7 @@
 ## Evaluation result
 
 ## Eval set medium
-| hybrid search alpha | context | Answer relevance | Context relevance | Groundness | Answer correctness    |
+| hybrid search alpha | Retrieval method | Answer relevance | Context relevance | Groundness | Answer correctness    |
 | ------------------- | ------- | ---------------- | ----------------- | ------------ | --------------------- |
 | 0.25                | SWR     | 0.852   |   0.836    |        0.662      |0.74
 | 0.25                | AMR     |      0.86   |    0.85      | 0.672            | 0.76
@@ -15,7 +15,7 @@
 
 
 ## Eval set hard
-| hybrid search alpha | context | Answer relevance | Context relevance | Groundness | Answer correctness    |
+| hybrid search alpha | Retrieval method | Answer relevance | Context relevance | Groundness | Answer correctness    |
 | ------------------- | ------- | ---------------- | ----------------- | ------------ | --------------------- |
 | 0.25                | SWR     |   **0.930**   |  0.842   |   0.670       |**0.660**
 | 0.25                | AMR     |   0.860   | 0.824      |  0.632        | 0.620
